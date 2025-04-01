@@ -183,7 +183,18 @@ class _FlightsScreenState extends State<FlightsScreen> {
     final TextEditingController aircraftModelController = TextEditingController(text: isEditing ? flight.aircraftModel : '');
     final TextEditingController registrationNumberController = TextEditingController(text: isEditing ? flight.registrationNumber : '');
 
+    // Set a default status that exists in the dropdown options if the current status is not valid
     String status = isEditing ? flight.status : 'scheduled';
+
+    // List of valid status options
+    const List<String> validStatusOptions = [
+      'scheduled', 'delayed', 'boarding', 'departed', 'arrived', 'canceled'
+    ];
+
+    // If the flight's status is not in the valid options, default to 'scheduled'
+    if (isEditing && !validStatusOptions.contains(status)) {
+      status = 'scheduled';
+    }
 
     await showDialog(
       context: context,
