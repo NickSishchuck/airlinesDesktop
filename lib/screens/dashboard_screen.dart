@@ -4,6 +4,9 @@ import 'package:syncfusion_flutter_charts/charts.dart';
 import '../services/api_service.dart';
 import '../utils/constants.dart';
 
+//TODO remove the dashboard
+
+
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({Key? key}) : super(key: key);
 
