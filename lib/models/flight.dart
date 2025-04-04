@@ -12,7 +12,8 @@ class Flight {
   final String registrationNumber;
   final int? bookedSeats;
   final int? totalCapacity;
-  final String? captainName;
+  //final String? captainName;
+  //TODO change captain info
 
   Flight({
     required this.flightId,
@@ -27,7 +28,7 @@ class Flight {
     required this.registrationNumber,
     this.bookedSeats,
     this.totalCapacity,
-    this.captainName,
+    //this.captainName,
   });
 
   factory Flight.fromJson(Map<String, dynamic> json) {
@@ -55,7 +56,7 @@ class Flight {
       // Optional numeric fields
       bookedSeats: json['booked_seats'],
       totalCapacity: json['total_capacity'],
-      captainName: json['captain_name']?.toString(),
+      //captainName: json['captain_name']?.toString(),
     );
   }
 
@@ -73,7 +74,7 @@ class Flight {
       'registration_number': registrationNumber,
       'booked_seats': bookedSeats,
       'total_capacity': totalCapacity,
-      'captain_name': captainName,
+      //'captain_name': captainName,
     };
   }
 }

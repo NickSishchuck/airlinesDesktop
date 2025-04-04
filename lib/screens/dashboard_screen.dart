@@ -220,98 +220,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
               const SizedBox(height: 24),
 
-              // Revenue and Tickets Row
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildStatCard(
-                      'Total Tickets Sold',
-                      _totalTickets.toString(),
-                      Icons.confirmation_number,
-                      AppColors.infoColor,
-                      height: 140,
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: _buildStatCard(
-                      'Total Revenue',
-                      '\$${_totalRevenue.toStringAsFixed(2)}',
-                      Icons.attach_money,
-                      AppColors.accentColor,
-                      height: 140,
-                    ),
-                  ),
-                ],
-              ),
               const SizedBox(height: 24),
 
               // Flight Status Chart and Recent Flights
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Flight Status Chart
-                  Expanded(
-                    flex: 1,
-                    child: Container(
-                      height: 300,
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(8),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.grey.withOpacity(0.1),
-                            spreadRadius: 1,
-                            blurRadius: 3,
-                          ),
-                        ],
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'Flight Status Distribution',
-                            style: AppTextStyles.title,
-                          ),
-                          const SizedBox(height: 16),
-                          Expanded(
-                            child: SfCircularChart(
-                              legend: Legend(
-                                isVisible: true,
-                                position: LegendPosition.bottom,
-                              ),
-                              series: <CircularSeries>[
-                                DoughnutSeries<Map<String, dynamic>, String>(
-                                  dataSource: _flightStatusData,
-                                  xValueMapper: (data,
-                                      _) => data['status'] as String,
-                                  yValueMapper: (data,
-                                      _) => data['count'] as int,
-                                  dataLabelMapper: (data,
-                                      _) => '${data['count']}',
-                                  pointColorMapper: (data,
-                                      _) => data['color'] as Color,
-                                  dataLabelSettings: const DataLabelSettings(
-                                    isVisible: true,
-                                    labelPosition: ChartDataLabelPosition
-                                        .outside,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
+
                   const SizedBox(width: 16),
 
                   // Recent Flights
                   Expanded(
-                    flex: 2,
                     child: Container(
-                      height: 300,
+                      height: 500,
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
                         color: Colors.white,
@@ -353,7 +274,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 return ListTile(
                                   leading: const Icon(Icons.flight),
                                   title: Text(
-                                    '${flight['flight_number']} - ${flight['origin']} to ${flight['destination']}',
+                                    '${flight['flight_number']} - ${flight['origin']} -> ${flight['destination']}',
                                     style: const TextStyle(
                                         fontWeight: FontWeight.bold),
                                   ),
@@ -393,7 +314,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Widget _buildStatCard(String title, String value, IconData icon, Color color,
-      {double height = 180}) {
+      {double height = 160}) {
     return Container(
       height: height,
       padding: const EdgeInsets.all(16),
@@ -419,8 +340,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
             size: 40,
             color: color,
           ),
-          const SizedBox(height: 8), // Reduced from 16
-          Flexible( // Wrap in Flexible to allow text to adapt
+          const SizedBox(height: 8),
+          Flexible(
             child: Text(
               value,
               style: TextStyle(
@@ -428,18 +349,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 fontWeight: FontWeight.bold,
                 color: color,
               ),
-              overflow: TextOverflow.ellipsis, // Add overflow handling
+              overflow: TextOverflow.ellipsis,
             ),
           ),
-          const SizedBox(height: 4), // Reduced from 8
-          Flexible( // Wrap in Flexible to allow text to adapt
+          const SizedBox(height: 4),
+          Flexible(
             child: Text(
               title,
               style: const TextStyle(
                 fontSize: 16,
                 color: Colors.grey,
               ),
-              overflow: TextOverflow.ellipsis, // Add overflow handling
+              overflow: TextOverflow.ellipsis,
             ),
           ),
         ],

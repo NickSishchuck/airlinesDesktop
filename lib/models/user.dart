@@ -5,7 +5,6 @@ class User {
   final String lastName;
   final String email;
   final String role;
-  final String createdAt;
 
   User({
     required this.userId,
@@ -13,7 +12,6 @@ class User {
     required this.lastName,
     required this.email,
     required this.role,
-    required this.createdAt,
   });
 
 
@@ -24,7 +22,6 @@ class User {
       lastName: json['last_name'],
       email: json['email'],
       role: json['role'],
-      createdAt: json['created_at'],
     );
   }
 }

@@ -119,7 +119,6 @@ class _LoginScreenState extends State<LoginScreen> {
                           border: OutlineInputBorder(),
                         ),
                         keyboardType: TextInputType.emailAddress,
-                        validator: Validators.validateEmail,
                       ),
                       const SizedBox(height: 16),
                       TextFormField(
