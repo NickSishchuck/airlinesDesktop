@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:syncfusion_flutter_charts/charts.dart';
 import '../services/api_service.dart';
 import '../utils/constants.dart';
+import 'dart:async';
 
-//TODO remove the dashboard
+//TODO add outlines to all fields
+//TODO make a button that enables\disables auto-refreshing
 
 
 class DashboardScreen extends StatefulWidget {
@@ -16,13 +17,12 @@ class DashboardScreen extends StatefulWidget {
 
 class _DashboardScreenState extends State<DashboardScreen> {
   final ApiService _apiService = ApiService();
+  Timer? _refreshTimer; //for auto-refreshing
   bool _isLoading = true;
   int _totalFlights = 0;
   int _scheduledFlights = 0;
   int _delayedFlights = 0;
   int _canceledFlights = 0;
-  int _totalTickets = 0;
-  double _totalRevenue = 0;
   List<Map<String, dynamic>> _flightStatusData = [];
   List<Map<String, dynamic>> _recentFlights = [];
 
@@ -30,6 +30,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
   void initState() {
     super.initState();
     _loadDashboardData();
+
+    // Set up timer to refresh dashboard every minute
+    _refreshTimer = Timer.periodic(const Duration(minutes: 1), (timer) {
+      if (mounted) {
+        _loadDashboardData();
+      }
+    });
   }
 
   Future<void> _loadDashboardData() async {
@@ -65,54 +72,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
           if (status == 'canceled') canceled++;
         }
 
-        // Get sales report for the current month
-        final startOfMonth = DateTime(now.year, now.month, 1);
-        final endOfMonth = DateTime(now.year, now.month + 1, 0);
-        final salesResponse = await _apiService.generateTicketSalesReport(
-          DateFormat('yyyy-MM-dd').format(startOfMonth),
-          DateFormat('yyyy-MM-dd').format(endOfMonth),
-        );
-
-        double totalRevenue = 0;
-        int totalTickets = 0;
-
-        if (salesResponse['success'] && salesResponse['data'] != null) {
-          final salesData = salesResponse['data'] as List;
-          for (var sale in salesData) {
-            // Handle total_revenue which might be a string, int, or double
-            if (sale['total_revenue'] is String) {
-              totalRevenue += double.parse(sale['total_revenue']);
-            } else if (sale['total_revenue'] is num) {
-              totalRevenue += (sale['total_revenue'] as num).toDouble();
-            }
-
-            // Handle tickets_sold which might be a string or int
-            if (sale['tickets_sold'] is String) {
-              totalTickets += int.parse(sale['tickets_sold']);
-            } else if (sale['tickets_sold'] is int) {
-              totalTickets += sale['tickets_sold'] as int;
-            }
-          }
-        }
-
-        // Flight status data for chart
-        _flightStatusData = [
-          {
-            'status': 'Scheduled',
-            'count': scheduled,
-            'color': AppColors.scheduledColor
-          },
-          {
-            'status': 'Delayed',
-            'count': delayed,
-            'color': AppColors.delayedColor
-          },
-          {
-            'status': 'Canceled',
-            'count': canceled,
-            'color': AppColors.canceledColor
-          },
-        ];
 
         // Get recent flights
         final recentFlights = flights
@@ -131,8 +90,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
           _scheduledFlights = scheduled;
           _delayedFlights = delayed;
           _canceledFlights = canceled;
-          _totalTickets = totalTickets;
-          _totalRevenue = totalRevenue;
           _recentFlights = recentFlights.take(5).toList();
           _isLoading = false;
         });
