@@ -292,4 +292,71 @@ class ApiService {
   Future<Map<String, dynamic>> updateTicketPaymentStatus(int id, String status) async {
     return await patch('/tickets/$id/payment', {'payment_status': status});
   }
+
+  Future<Map<String, dynamic>> getFlightCrew(int id) async {
+    return await get('/flights/$id/crew');
+  }
+
+
+  // Crews API
+  Future<Map<String, dynamic>> getAllCrews({int page = 1, int limit = 10}) async {
+    return await get('/crews?page=$page&limit=$limit');
+  }
+
+  Future<Map<String, dynamic>> getCrewById(int id) async {
+    return await get('/crews/$id');
+  }
+
+  Future<Map<String, dynamic>> getCrewMembers(int crewId) async {
+    return await get('/crews/$crewId/members');
+  }
+
+  Future<Map<String, dynamic>> createCrew(Map<String, dynamic> crewData) async {
+    return await post('/crews', crewData);
+  }
+
+  Future<Map<String, dynamic>> updateCrew(int id, Map<String, dynamic> crewData) async {
+    return await put('/crews/$id', crewData);
+  }
+
+  Future<Map<String, dynamic>> deleteCrew(int id) async {
+    return await delete('/crews/$id');
+  }
+
+  Future<Map<String, dynamic>> assignCrewMember(int crewId, int crewMemberId) async {
+    return await post('/crews/$crewId/members', {'crew_member_id': crewMemberId});
+  }
+
+  Future<Map<String, dynamic>> removeCrewMember(int crewId, int crewMemberId) async {
+    return await delete('/crews/$crewId/members/$crewMemberId');
+  }
+
+  Future<Map<String, dynamic>> validateCrew(int crewId) async {
+    return await get('/crews/$crewId/validate');
+  }
+
+  // Crew Members API
+  Future<Map<String, dynamic>> getAllCrewMembers({int page = 1, int limit = 10, String? role}) async {
+    String url = '/crew-members?page=$page&limit=$limit';
+    if (role != null) {
+      url += '&role=$role';
+    }
+    return await get(url);
+  }
+
+  Future<Map<String, dynamic>> getCrewMemberById(int id) async {
+    return await get('/crew-members/$id');
+  }
+
+  Future<Map<String, dynamic>> createCrewMember(Map<String, dynamic> crewMemberData) async {
+    return await post('/crew-members', crewMemberData);
+  }
+
+  Future<Map<String, dynamic>> updateCrewMember(int id, Map<String, dynamic> crewMemberData) async {
+    return await put('/crew-members/$id', crewMemberData);
+  }
+
+  Future<Map<String, dynamic>> deleteCrewMember(int id) async {
+    return await delete('/crew-members/$id');
+  }
 }

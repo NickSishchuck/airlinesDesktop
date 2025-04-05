@@ -40,6 +40,81 @@ class _FlightsScreenState extends State<FlightsScreen> {
     _dateController.dispose();
     super.dispose();
   }
+  void _showCrewDialog(Map<String, dynamic> crewData) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Flight Crew: ${crewData['crew_name']}'),
+          content: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text('Status: ${crewData['crew_status']}'),
+                const SizedBox(height: 16),
+
+                // Captains
+                if ((crewData['captains'] as List).isNotEmpty) ...[
+                  const Text(
+                    'Captains',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  ),
+                  const SizedBox(height: 8),
+                  ...((crewData['captains'] as List).map((captain) => Padding(
+                    padding: const EdgeInsets.only(left: 16.0, bottom: 4.0),
+                    child: Text(
+                      '${captain['first_name']} ${captain['last_name']} - License: ${captain['license_number']}',
+                    ),
+                  ))),
+                  const SizedBox(height: 16),
+                ],
+
+                // Pilots
+                if ((crewData['pilots'] as List).isNotEmpty) ...[
+                  const Text(
+                    'Pilots',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  ),
+                  const SizedBox(height: 8),
+                  ...((crewData['pilots'] as List).map((pilot) => Padding(
+                    padding: const EdgeInsets.only(left: 16.0, bottom: 4.0),
+                    child: Text(
+                      '${pilot['first_name']} ${pilot['last_name']} - License: ${pilot['license_number']}',
+                    ),
+                  ))),
+                  const SizedBox(height: 16),
+                ],
+
+                // Flight Attendants
+                if ((crewData['flight_attendants'] as List).isNotEmpty) ...[
+                  const Text(
+                    'Flight Attendants',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  ),
+                  const SizedBox(height: 8),
+                  ...((crewData['flight_attendants'] as List).map((attendant) => Padding(
+                    padding: const EdgeInsets.only(left: 16.0, bottom: 4.0),
+                    child: Text(
+                      '${attendant['first_name']} ${attendant['last_name']} - Exp: ${attendant['experience_years']} years',
+                    ),
+                  ))),
+                ],
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text('Close'),
+            ),
+          ],
+        );
+      },
+    );
+  }
 
   Future<void> _loadFlights() async {
     setState(() {
@@ -645,6 +720,10 @@ class _FlightsScreenState extends State<FlightsScreen> {
                               size: ColumnSize.M,
                             ),
                             DataColumn2(
+                              label: Text('Crew'),
+                              size: ColumnSize.M,
+                            ),
+                            DataColumn2(
                               label: Text('Actions'),
                               size: ColumnSize.L,
                             ),
@@ -673,6 +752,33 @@ class _FlightsScreenState extends State<FlightsScreen> {
                                   ),
                                 ),
                                 DataCell(Text(flight.aircraftModel)),
+                                DataCell(
+                                  flight.crewName != null
+                                      ? Text(flight.crewName!)
+                                      : TextButton(
+                                    onPressed: () async {
+                                      try {
+                                        EasyLoading.show(status: 'Loading crew info...');
+                                        final response = await _apiService.getFlightCrew(flight.flightId);
+                                        EasyLoading.dismiss();
+
+                                        if (response['success'] && response['data'] != null) {
+                                          _showCrewDialog(response['data']);
+                                        }
+                                      } catch (e) {
+                                        EasyLoading.dismiss();
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          SnackBar(
+                                            content: Text('Error getting crew info: ${e.toString()}'),
+                                            backgroundColor: AppColors.errorColor,
+                                          ),
+                                        );
+                                      }
+                                    },
+                                    child: const Text('View Crew'),
+                                  ),
+                                ),
+
                                 DataCell(
                                   Row(
                                     children: [
