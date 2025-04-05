@@ -229,8 +229,11 @@ class ApiService {
     return await get('/flights/$id');
   }
 
-  Future<Map<String, dynamic>> searchFlights(String origin, String destination, String date) async {
+  Future<Map<String, dynamic>> searchFlightsbyDate(String origin, String destination, String date) async {
     return await get('/flights/search/by-route-date?origin=$origin&destination=$destination&date=$date');
+  }
+  Future<Map<String, dynamic>> searchFlightsByRoute(String origin, String destination) async {
+    return await get('/flights/search/by-route?origin=$origin&destination=$destination');
   }
 
   Future<Map<String, dynamic>> generateFlightSchedule(String startDate, String endDate) async {

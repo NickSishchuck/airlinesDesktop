@@ -77,8 +77,7 @@ class _FlightsScreenState extends State<FlightsScreen> {
   Future<void> _searchFlights() async {
     // First, validate all required fields
     if (_originController.text.isEmpty ||
-        _destinationController.text.isEmpty ||
-        _dateController.text.isEmpty) {
+        _destinationController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Please fill all search fields'),
@@ -96,12 +95,10 @@ class _FlightsScreenState extends State<FlightsScreen> {
       // Ensure we're sending non-null values
       final origin = _originController.text.trim();
       final destination = _destinationController.text.trim();
-      final date = _dateController.text.trim();
 
-      final response = await _apiService.searchFlights(
+      final response = await _apiService.searchFlightsByRoute(
         origin,
-        destination,
-        date,
+        destination
       );
 
       if (response['success']) {
@@ -144,7 +141,6 @@ class _FlightsScreenState extends State<FlightsScreen> {
     setState(() {
       _originController.clear();
       _destinationController.clear();
-      _dateController.clear();
       _isSearchMode = false;
       _page = 1;
     });
@@ -565,17 +561,6 @@ class _FlightsScreenState extends State<FlightsScreen> {
                           ),
                         ),
                         const SizedBox(width: 16),
-                        Expanded(
-                          child: TextField(
-                            controller: _dateController,
-                            decoration: const InputDecoration(
-                              labelText: 'Date (YYYY-MM-DD)',
-                              border: OutlineInputBorder(),
-                            ),
-                            readOnly: true,
-                            onTap: () => _selectDate(context),
-                          ),
-                        ),
                         const SizedBox(width: 16),
                         ElevatedButton.icon(
                           onPressed: _searchFlights,
