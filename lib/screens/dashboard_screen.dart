@@ -184,8 +184,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
 
-                  const SizedBox(width: 16),
-
                   // Recent Flights
                   Expanded(
                     child: Container(
@@ -196,7 +194,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         borderRadius: BorderRadius.circular(8),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.grey.withOpacity(0.1),
+                            color: Colors.grey.withOpacity(0.6),
                             spreadRadius: 1,
                             blurRadius: 3,
                           ),
@@ -280,7 +278,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         borderRadius: BorderRadius.circular(8),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
+            color: Colors.grey.withOpacity(0.6),
             spreadRadius: 1,
             blurRadius: 3,
           ),
