@@ -477,7 +477,6 @@ class _TicketsScreenState extends State<TicketsScreen> {
           context: context,
           builder: (BuildContext context) {
             return AlertDialog(
-              title: const Text('Printable Ticket'),
               content: SingleChildScrollView(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -547,9 +546,14 @@ class _TicketsScreenState extends State<TicketsScreen> {
                           children: [
                             const Text('DEPARTURE:'),
                             Text(
-                              DateFormat('yyyy-MM-dd HH:mm').format(DateTime.parse(ticketData['departure_time'])),
+                              DateFormat('dd-MM').format(DateTime.parse(ticketData['departure_time'])),
                               style: const TextStyle(fontWeight: FontWeight.bold),
                             ),
+                            const SizedBox(height: 10),
+                            Text(
+                              DateFormat('HH:mm').format(DateTime.parse(ticketData['departure_time'])),
+                            ),
+
                           ],
                         ),
                         Column(
@@ -557,8 +561,12 @@ class _TicketsScreenState extends State<TicketsScreen> {
                           children: [
                             const Text('ARRIVAL:'),
                             Text(
-                              DateFormat('yyyy-MM-dd HH:mm').format(DateTime.parse(ticketData['arrival_time'])),
+                              DateFormat('dd-MM').format(DateTime.parse(ticketData['arrival_time'])),
                               style: const TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                            const SizedBox(height: 10),
+                            Text(
+                              DateFormat('HH:mm').format(DateTime.parse(ticketData['arrival_time'])),
                             ),
                           ],
                         ),

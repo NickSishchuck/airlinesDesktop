@@ -175,43 +175,43 @@ class _ReportsScreenState extends State<ReportsScreen> {
             ),
             const SizedBox(height: 16),
 
-            // Summary Cards
-            SizedBox(
-              height: 120,
-              child: _isLoading
-                  ? const Center(child: CircularProgressIndicator())
-                  : Row(
-                children: [
-                  Expanded(
-                    child: _buildSummaryCard(
-                      'Total Revenue',
-                      '\$${_totalRevenue.toStringAsFixed(2)}',
-                      Icons.attach_money,
-                      AppColors.accentColor,
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: _buildSummaryCard(
-                      'Tickets Sold',
-                      _totalTicketsSold.toString(),
-                      Icons.confirmation_number,
-                      AppColors.infoColor,
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: _buildSummaryCard(
-                      'Average Occupancy',
-                      '${_averageOccupancy.toStringAsFixed(2)}%',
-                      Icons.airline_seat_recline_normal,
-                      AppColors.primaryColor,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
+            // // Summary Cards
+            // SizedBox(
+            //   height: 120,
+            //   child: _isLoading
+            //       ? const Center(child: CircularProgressIndicator())
+            //       : Row(
+            //     children: [
+            //       Expanded(
+            //         child: _buildSummaryCard(
+            //           'Total Revenue',
+            //           '\$${_totalRevenue.toStringAsFixed(2)}',
+            //           Icons.attach_money,
+            //           AppColors.accentColor,
+            //         ),
+            //       ),
+            //       const SizedBox(width: 16),
+            //       Expanded(
+            //         child: _buildSummaryCard(
+            //           'Tickets Sold',
+            //           _totalTicketsSold.toString(),
+            //           Icons.confirmation_number,
+            //           AppColors.infoColor,
+            //         ),
+            //       ),
+            //       const SizedBox(width: 16),
+            //       Expanded(
+            //         child: _buildSummaryCard(
+            //           'Average Occupancy',
+            //           '${_averageOccupancy.toStringAsFixed(2)}%',
+            //           Icons.airline_seat_recline_normal,
+            //           AppColors.primaryColor,
+            //         ),
+            //       ),
+            //     ],
+            //   ),
+            // ),
+            // const SizedBox(height: 16),
 
             // Charts and Tables
             Expanded(
@@ -224,59 +224,59 @@ class _ReportsScreenState extends State<ReportsScreen> {
                   : Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Charts
-                  Expanded(
-                    flex: 1,
-                    child: Card(
-                      child: Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'Revenue by Class',
-                              style: AppTextStyles.title,
-                            ),
-                            const SizedBox(height: 16),
-                            Expanded(
-                              child: SfCircularChart(
-                                legend: Legend(
-                                  isVisible: true,
-                                  position: LegendPosition.bottom,
-                                ),
-                                series: <CircularSeries>[
-                                  PieSeries<MapEntry<String, double>, String>(
-                                    dataSource: _revenueByClass.entries.toList(),
-                                    xValueMapper: (entry, _) => entry.key.toUpperCase(),
-                                    yValueMapper: (entry, _) => entry.value,
-                                    dataLabelMapper: (entry, _) => '\$${entry.value.toStringAsFixed(0)}',
-                                    pointColorMapper: (entry, _) {
-                                      switch (entry.key) {
-                                        case 'economy':
-                                          return AppColors.infoColor;
-                                        case 'business':
-                                          return AppColors.accentColor;
-                                        case 'first':
-                                          return AppColors.primaryColor;
-                                        default:
-                                          return Colors.grey;
-                                      }
-                                    },
-                                    dataLabelSettings: const DataLabelSettings(
-                                      isVisible: true,
-                                      labelPosition: ChartDataLabelPosition.outside,
-                                    ),
-                                  ),
-                                ],
-                                tooltipBehavior: TooltipBehavior(enable: true),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 16),
+                  // // Charts
+                  // Expanded(
+                  //   flex: 1,
+                  //   child: Card(
+                  //     child: Padding(
+                  //       padding: const EdgeInsets.all(16.0),
+                  //       child: Column(
+                  //         crossAxisAlignment: CrossAxisAlignment.start,
+                  //         children: [
+                  //           const Text(
+                  //             'Revenue by Class',
+                  //             style: AppTextStyles.title,
+                  //           ),
+                  //           const SizedBox(height: 16),
+                  //           Expanded(
+                  //             child: SfCircularChart(
+                  //               legend: Legend(
+                  //                 isVisible: true,
+                  //                 position: LegendPosition.bottom,
+                  //               ),
+                  //               series: <CircularSeries>[
+                  //                 PieSeries<MapEntry<String, double>, String>(
+                  //                   dataSource: _revenueByClass.entries.toList(),
+                  //                   xValueMapper: (entry, _) => entry.key.toUpperCase(),
+                  //                   yValueMapper: (entry, _) => entry.value,
+                  //                   dataLabelMapper: (entry, _) => '\$${entry.value.toStringAsFixed(0)}',
+                  //                   pointColorMapper: (entry, _) {
+                  //                     switch (entry.key) {
+                  //                       case 'economy':
+                  //                         return AppColors.infoColor;
+                  //                       case 'business':
+                  //                         return AppColors.accentColor;
+                  //                       case 'first':
+                  //                         return AppColors.primaryColor;
+                  //                       default:
+                  //                         return Colors.grey;
+                  //                     }
+                  //                   },
+                  //                   dataLabelSettings: const DataLabelSettings(
+                  //                     isVisible: true,
+                  //                     labelPosition: ChartDataLabelPosition.outside,
+                  //                   ),
+                  //                 ),
+                  //               ],
+                  //               tooltipBehavior: TooltipBehavior(enable: true),
+                  //             ),
+                  //           ),
+                  //         ],
+                  //       ),
+                  //     ),
+                  //   ),
+                  // ),
+                  // const SizedBox(width: 16),
 
                   // Data Table
                   Expanded(
@@ -294,18 +294,40 @@ class _ReportsScreenState extends State<ReportsScreen> {
                                   'Detailed Sales Report',
                                   style: AppTextStyles.title,
                                 ),
-                                ElevatedButton.icon(
-                                  onPressed: () {
-                                    // Export functionality would be implemented here
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                        content: Text('Export functionality would be implemented here'),
-                                        backgroundColor: AppColors.infoColor,
-                                      ),
-                                    );
-                                  },
-                                  icon: const Icon(Icons.download),
-                                  label: const Text('Export CSV'),
+
+
+                                Row(
+                                  children: [
+                                    ElevatedButton.icon(
+                                      onPressed: () {
+                                        // Export functionality would be implemented here
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          const SnackBar(
+                                            content: Text('Export functionality would be implemented here'),
+                                            backgroundColor: AppColors.infoColor,
+                                          ),
+                                        );
+                                      },
+                                      icon: const Icon(Icons.download),
+                                      label: const Text('Export CSV'),
+                                    ),
+
+
+
+                                    ElevatedButton.icon(
+                                      onPressed: () {
+                                        // Export functionality would be implemented here
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          const SnackBar(
+                                            content: Text('Export functionality would be implemented here'),
+                                            backgroundColor: AppColors.infoColor,
+                                          ),
+                                        );
+                                      },
+                                      icon: const Icon(Icons.download),
+                                      label: const Text('Export PDF'),
+                                    ),
+                                  ],
                                 ),
                               ],
                             ),
