@@ -52,6 +52,8 @@ class _TicketsScreenState extends State<TicketsScreen> {
         final List ticketsData = response['data'];
         final tickets = ticketsData.map((data) => Ticket.fromJson(data)).toList();
 
+        tickets.sort((a, b) => a.ticketId.compareTo(b.ticketId));
+
         setState(() {
           _tickets = tickets;
           _totalPages = response['pagination']['totalPages'] ?? 1;

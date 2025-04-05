@@ -9,7 +9,10 @@ import 'screens/dashboard_screen.dart';
 import 'screens/flights_screen.dart';
 import 'screens/tickets_screen.dart';
 import 'screens/reports_screen.dart';
+import 'screens/crew_management_screen.dart';
+import 'screens/crew_member_management_screen.dart';
 import 'utils/constants.dart';
+
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -132,6 +135,8 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
     DashboardScreen(),
     FlightsScreen(),
     TicketsScreen(),
+    CrewManagementScreen(),
+    CrewMemberManagementScreen(),
     ReportsScreen(),
   ];
 
@@ -139,9 +144,10 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
     'Dashboard',
     'Flights Management',
     'Tickets Management',
+    'Crew Management',
+    'Crew Members Management',
     'Reports & Analytics',
   ];
-
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
@@ -251,12 +257,39 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
                 Navigator.pop(context);
               },
             ),
+            ExpansionTile(
+              leading: const Icon(Icons.people),
+              title: const Text('Crew Management'),
+              initiallyExpanded: _selectedIndex == 3 || _selectedIndex == 4,
+              children: [
+                ListTile(
+                  leading: const Icon(Icons.groups),
+                  title: const Text('Crews'),
+                  selected: _selectedIndex == 3,
+                  onTap: () {
+                    _onItemTapped(3);
+                    Navigator.pop(context);
+                  },
+                  contentPadding: const EdgeInsets.only(left: 32.0),
+                ),
+                ListTile(
+                  leading: const Icon(Icons.person),
+                  title: const Text('Crew Members'),
+                  selected: _selectedIndex == 4,
+                  onTap: () {
+                    _onItemTapped(4);
+                    Navigator.pop(context);
+                  },
+                  contentPadding: const EdgeInsets.only(left: 32.0),
+                ),
+              ],
+            ),
             ListTile(
               leading: const Icon(Icons.analytics),
               title: const Text('Reports & Analytics'),
-              selected: _selectedIndex == 3,
+              selected: _selectedIndex == 5,
               onTap: () {
-                _onItemTapped(3);
+                _onItemTapped(5);
                 Navigator.pop(context);
               },
             ),
