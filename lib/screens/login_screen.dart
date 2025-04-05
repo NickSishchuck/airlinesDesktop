@@ -36,7 +36,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
         // Print login details for debugging (remove in production)
         if (kDebugMode) {
-          print('Attempting login with email: $email');
+          print('Attempting login with username: $email');
         }
 
         final success = await authProvider.login(email, password);
@@ -114,7 +114,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       TextFormField(
                         controller: _emailController,
                         decoration: const InputDecoration(
-                          labelText: 'Email',
+                          labelText: 'Username',
                           prefixIcon: Icon(Icons.email),
                           border: OutlineInputBorder(),
                         ),

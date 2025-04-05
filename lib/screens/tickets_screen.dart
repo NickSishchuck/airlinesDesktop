@@ -589,12 +589,15 @@ class _TicketsScreenState extends State<TicketsScreen> {
                           ],
                         ),
                         Column(
-                          crossAxisAlignment: CrossAxisAlignment.end,
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text('PASSPORT:'),
+                            const Text('SEAT:'),
                             Text(
-                              ticketData['passport_number'],
-                              style: const TextStyle(fontWeight: FontWeight.bold),
+                              ticketData['seat_number'],
+                              style: const TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ],
                         ),
@@ -605,15 +608,12 @@ class _TicketsScreenState extends State<TicketsScreen> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                          crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
-                            const Text('SEAT:'),
+                            const Text('PASSPORT:'),
                             Text(
-                              ticketData['seat_number'],
-                              style: const TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                              ),
+                              ticketData['passport_number'],
+                              style: const TextStyle(fontWeight: FontWeight.bold),
                             ),
                           ],
                         ),
