@@ -359,4 +359,12 @@ class ApiService {
   Future<Map<String, dynamic>> deleteCrewMember(int id) async {
     return await delete('/crew-members/$id');
   }
+
+  Future<Map<String, dynamic>> getTicketsByFlightNumber(String flightNumber) async {
+    return await get('/tickets/flight-number/$flightNumber');
+  }
+
+  Future<Map<String, dynamic>> getTicketsByPassportNumber(String passportNumber) async {
+    return await get('/tickets/passport/$passportNumber');
+  }
 }

@@ -4,7 +4,6 @@ import '../services/api_service.dart';
 import '../utils/constants.dart';
 import 'dart:async';
 
-//TODO add outlines to all fields
 //TODO make a button that enables\disables auto-refreshing
 
 
