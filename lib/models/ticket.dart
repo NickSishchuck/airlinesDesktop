@@ -35,18 +35,18 @@ class Ticket {
 
   factory Ticket.fromJson(Map<String, dynamic> json) {
     return Ticket(
-      ticketId: json['ticket_id'],
-      seatNumber: json['seat_number'],
-      ticketClass: json['class'],
-
+      ticketId: json['ticket_id'] ?? 0,
+      seatNumber: json['seat_number'] ?? '',
+      ticketClass: json['class'] ?? 'economy',
       price: json['price'] is int
           ? json['price'].toDouble()
           : (json['price'] is String
           ? double.parse(json['price'])
-          : json['price']),
-
-      bookingDate: DateTime.parse(json['booking_date']),
-      paymentStatus: json['payment_status'],
+          : json['price'] ?? 0.0),
+      bookingDate: json['booking_date'] != null
+          ? DateTime.parse(json['booking_date'])
+          : DateTime.now(),
+      paymentStatus: json['payment_status'] ?? 'pending',
       flightNumber: json['flight_number'],
       departureTime: json['departure_time'] != null ? DateTime.parse(json['departure_time']) : null,
       arrivalTime: json['arrival_time'] != null ? DateTime.parse(json['arrival_time']) : null,
@@ -54,7 +54,7 @@ class Ticket {
       destination: json['destination'],
       passengerName: json['passenger_name'],
       passportNumber: json['passport_number'],
-      passengerId: json['passenger_id'],
+      passengerId: json['user_id'],
       flightId: json['flight_id'],
     );
   }
