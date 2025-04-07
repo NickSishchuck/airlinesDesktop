@@ -5,6 +5,7 @@ import 'package:flutter_easyloading/flutter_easyloading.dart';
 import '../services/api_service.dart';
 import '../models/ticket.dart';
 import '../utils/constants.dart';
+import 'package:flutter/foundation.dart';
 
 class TicketsScreen extends StatefulWidget {
   const TicketsScreen({Key? key}) : super(key: key);
@@ -24,8 +25,11 @@ class _TicketsScreenState extends State<TicketsScreen> {
   // Search parameters
   final TextEditingController _searchFlightController = TextEditingController();
   final TextEditingController _searchPassengerController = TextEditingController();
+  final TextEditingController _searchFlightNumberController = TextEditingController();
+  final TextEditingController _searchPassportNumberController = TextEditingController();
+
   bool _isSearchMode = false;
-  String _searchType = 'flight'; // 'flight' or 'passenger'
+  String _searchType = 'flight'; // 'flight', 'passenger', 'flightNumber', or 'passportNumber'
 
   @override
   void initState() {
@@ -83,64 +87,105 @@ class _TicketsScreenState extends State<TicketsScreen> {
     try {
       Map<String, dynamic> response;
 
-      if (_searchType == 'flight') {
-        if (_searchFlightController.text.isEmpty) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Please enter a flight ID'),
-              backgroundColor: AppColors.warningColor,
-            ),
-          );
-          setState(() {
-            _isLoading = false;
-          });
-          return;
-        }
+      switch (_searchType) {
+        case 'flight':
+          if (_searchFlightController.text.isEmpty) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Please enter a Flight ID'),
+                backgroundColor: AppColors.warningColor,
+              ),
+            );
+            setState(() {
+              _isLoading = false;
+            });
+            return;
+          }
 
-        final flightId = int.tryParse(_searchFlightController.text);
-        if (flightId == null) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Flight ID must be a number'),
-              backgroundColor: AppColors.warningColor,
-            ),
-          );
-          setState(() {
-            _isLoading = false;
-          });
-          return;
-        }
+          final flightId = int.tryParse(_searchFlightController.text);
+          if (flightId == null) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Flight ID must be a number'),
+                backgroundColor: AppColors.warningColor,
+              ),
+            );
+            setState(() {
+              _isLoading = false;
+            });
+            return;
+          }
 
-        response = await _apiService.getTicketsByFlightId(flightId);
-      } else {
-        if (_searchPassengerController.text.isEmpty) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Please enter a passenger ID'),
-              backgroundColor: AppColors.warningColor,
-            ),
-          );
-          setState(() {
-            _isLoading = false;
-          });
-          return;
-        }
+          response = await _apiService.getTicketsByFlightId(flightId);
+          break;
 
-        final passengerId = int.tryParse(_searchPassengerController.text);
-        if (passengerId == null) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Passenger ID must be a number'),
-              backgroundColor: AppColors.warningColor,
-            ),
-          );
-          setState(() {
-            _isLoading = false;
-          });
-          return;
-        }
+        case 'passenger':
+          if (_searchPassengerController.text.isEmpty) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Please enter a Passenger ID'),
+                backgroundColor: AppColors.warningColor,
+              ),
+            );
+            setState(() {
+              _isLoading = false;
+            });
+            return;
+          }
 
-        response = await _apiService.getTicketsByPassengerId(passengerId);
+          final passengerId = int.tryParse(_searchPassengerController.text);
+          if (passengerId == null) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Passenger ID must be a number'),
+                backgroundColor: AppColors.warningColor,
+              ),
+            );
+            setState(() {
+              _isLoading = false;
+            });
+            return;
+          }
+
+          response = await _apiService.getTicketsByPassengerId(passengerId);
+          break;
+
+        case 'flightNumber':
+          if (_searchFlightNumberController.text.isEmpty) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Please enter a Flight Number'),
+                backgroundColor: AppColors.warningColor,
+              ),
+            );
+            setState(() {
+              _isLoading = false;
+            });
+            return;
+          }
+
+          response = await _apiService.getTicketsByFlightNumber(_searchFlightNumberController.text);
+          break;
+
+        case 'passportNumber':
+          if (_searchPassportNumberController.text.isEmpty) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Please enter a Passport Number'),
+                backgroundColor: AppColors.warningColor,
+              ),
+            );
+            setState(() {
+              _isLoading = false;
+            });
+            return;
+          }
+
+          response = await _apiService.getTicketsByPassportNumber(_searchPassportNumberController.text);
+          break;
+
+        default:
+          throw Exception('Invalid search type');
       }
 
       if (response['success']) {
@@ -735,24 +780,32 @@ class _TicketsScreenState extends State<TicketsScreen> {
                     const SizedBox(height: 16),
                     Row(
                       children: [
-                        SegmentedButton<String>(
-                          segments: const [
-                            ButtonSegment(
+                        DropdownButton<String>(
+                          value: _searchType,
+                          items: const [
+                            DropdownMenuItem(
                               value: 'flight',
-                              icon: Icon(Icons.flight),
-                              label: Text('By Flight'),
+                              child: Text('By Flight ID'),
                             ),
-                            ButtonSegment(
+                            DropdownMenuItem(
                               value: 'passenger',
-                              icon: Icon(Icons.person),
-                              label: Text('By Passenger'),
+                              child: Text('By Passenger ID'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'flightNumber',
+                              child: Text('By Flight Number'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'passportNumber',
+                              child: Text('By Passport Number'),
                             ),
                           ],
-                          selected: {_searchType},
-                          onSelectionChanged: (Set<String> newSelection) {
-                            setState(() {
-                              _searchType = newSelection.first;
-                            });
+                          onChanged: (String? newValue) {
+                            if (newValue != null) {
+                              setState(() {
+                                _searchType = newValue;
+                              });
+                            }
                           },
                         ),
                         const SizedBox(width: 16),
@@ -767,7 +820,7 @@ class _TicketsScreenState extends State<TicketsScreen> {
                               keyboardType: TextInputType.number,
                             ),
                           )
-                        else
+                        else if (_searchType == 'passenger')
                           Expanded(
                             child: TextField(
                               controller: _searchPassengerController,
@@ -777,7 +830,27 @@ class _TicketsScreenState extends State<TicketsScreen> {
                               ),
                               keyboardType: TextInputType.number,
                             ),
-                          ),
+                          )
+                        else if (_searchType == 'flightNumber')
+                            Expanded(
+                              child: TextField(
+                                controller: _searchFlightNumberController,
+                                decoration: const InputDecoration(
+                                  labelText: 'Flight Number (e.g., PS101)',
+                                  border: OutlineInputBorder(),
+                                ),
+                              ),
+                            )
+                          else // passportNumber
+                            Expanded(
+                              child: TextField(
+                                controller: _searchPassportNumberController,
+                                decoration: const InputDecoration(
+                                  labelText: 'Passport Number',
+                                  border: OutlineInputBorder(),
+                                ),
+                              ),
+                            ),
                         const SizedBox(width: 16),
                         ElevatedButton.icon(
                           onPressed: _searchTickets,
