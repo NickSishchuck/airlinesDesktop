@@ -22,10 +22,20 @@ class _CrewMemberManagementScreenState extends State<CrewMemberManagementScreen>
   int _totalPages = 1;
   String? _selectedRole;
 
+  // Search functionality
+  final TextEditingController _searchController = TextEditingController();
+  bool _isSearchMode = false;
+
   @override
   void initState() {
     super.initState();
     _loadCrewMembers();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadCrewMembers() async {
@@ -51,6 +61,7 @@ class _CrewMemberManagementScreenState extends State<CrewMemberManagementScreen>
           _crewMembers = crewMembersData;
           _totalPages = response['pagination']['totalPages'] ?? 1;
           _isLoading = false;
+          _isSearchMode = false;
         });
 
       } else {
@@ -69,6 +80,73 @@ class _CrewMemberManagementScreenState extends State<CrewMemberManagementScreen>
     }
   }
 
+  // Search crew members by last name
+  Future<void> _searchCrewMembers() async {
+    final lastName = _searchController.text.trim();
+
+    if (lastName.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please enter a last name to search'),
+          backgroundColor: AppColors.warningColor,
+        ),
+      );
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      print('Calling API to search for: $lastName');
+      final response = await _apiService.searchCrewMembersByLastName(lastName);
+      print('API response received: ${response['success']}');
+
+      if (response['success']) {
+        final List crewMembersData = response['data'] ?? [];
+
+        setState(() {
+          _crewMembers = crewMembersData;
+          _isLoading = false;
+          _isSearchMode = true;
+        });
+
+        // Notify if no results found
+        if (crewMembersData.isEmpty) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('No crew members found with last name "$lastName"'),
+              backgroundColor: AppColors.warningColor,
+            ),
+          );
+        }
+      } else {
+        throw Exception('Search failed');
+      }
+    } catch (e) {
+      print('Search error: $e');
+      setState(() {
+        _isLoading = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Search error: ${e.toString()}'),
+          backgroundColor: AppColors.errorColor,
+        ),
+      );
+    }
+  }
+
+  // Reset search and go back to paginated view
+  void _resetSearch() {
+    setState(() {
+      _searchController.clear();
+      _isSearchMode = false;
+    });
+    _loadCrewMembers();
+  }
+
   Future<void> _showCrewMemberDialog({Map<String, dynamic>? crewMember}) async {
     final bool isEditing = crewMember != null;
 
@@ -76,12 +154,12 @@ class _CrewMemberManagementScreenState extends State<CrewMemberManagementScreen>
     final TextEditingController lastNameController = TextEditingController(text: isEditing ? crewMember['last_name'] : '');
     final TextEditingController licenseNumberController = TextEditingController(text: isEditing ? crewMember['license_number'] ?? '' : '');
     final TextEditingController dateOfBirthController = TextEditingController(
-      text: isEditing && crewMember['date_of_birth'] != null
-          ? DateFormat('yyyy-MM-dd').format(DateTime.parse(crewMember['date_of_birth']))
-          : ''
+        text: isEditing && crewMember['date_of_birth'] != null
+            ? DateFormat('yyyy-MM-dd').format(DateTime.parse(crewMember['date_of_birth']))
+            : ''
     );
     final TextEditingController experienceYearsController = TextEditingController(
-      text: isEditing ? crewMember['experience_years']?.toString() ?? '' : ''
+        text: isEditing ? crewMember['experience_years']?.toString() ?? '' : ''
     );
     final TextEditingController contactNumberController = TextEditingController(text: isEditing ? crewMember['contact_number'] ?? '' : '');
     final TextEditingController emailController = TextEditingController(text: isEditing ? crewMember['email'] ?? '' : '');
@@ -381,63 +459,63 @@ class _CrewMemberManagementScreenState extends State<CrewMemberManagementScreen>
               child: SizedBox(
                 width: double.maxFinite,
                 child: assignmentsData.isEmpty
-                  ? const Center(child: Text('This crew member is not assigned to any crews.'))
-                  : Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        DataTable2(
-                          columns: const [
-                            DataColumn2(
-                              label: Text('Crew ID'),
-                              size: ColumnSize.S,
-                            ),
-                            DataColumn2(
-                              label: Text('Crew Name'),
-                              size: ColumnSize.L,
-                            ),
-                            DataColumn2(
-                              label: Text('Status'),
-                              size: ColumnSize.M,
-                            ),
-                            DataColumn2(
-                              label: Text('Members'),
-                              size: ColumnSize.S,
-                              numeric: true,
-                            ),
-                          ],
-                          rows: assignmentsData.map<DataRow>((assignment) {
-                            return DataRow(
-                              cells: [
-                                DataCell(Text('#${assignment['crew_id']}')),
-                                DataCell(Text(assignment['name'])),
-                                DataCell(
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                    decoration: BoxDecoration(
-                                      color: assignment['status'] == 'active'
-                                        ? AppColors.successColor
-                                        : assignment['status'] == 'off-duty'
-                                          ? AppColors.warningColor
-                                          : AppColors.infoColor,
-                                      borderRadius: BorderRadius.circular(4),
-                                    ),
-                                    child: Text(
-                                      assignment['status'].toUpperCase(),
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                DataCell(Text(assignment['member_count'].toString())),
-                              ],
-                            );
-                          }).toList(),
+                    ? const Center(child: Text('This crew member is not assigned to any crews.'))
+                    : Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    DataTable2(
+                      columns: const [
+                        DataColumn2(
+                          label: Text('Crew ID'),
+                          size: ColumnSize.S,
+                        ),
+                        DataColumn2(
+                          label: Text('Crew Name'),
+                          size: ColumnSize.L,
+                        ),
+                        DataColumn2(
+                          label: Text('Status'),
+                          size: ColumnSize.M,
+                        ),
+                        DataColumn2(
+                          label: Text('Members'),
+                          size: ColumnSize.S,
+                          numeric: true,
                         ),
                       ],
+                      rows: assignmentsData.map<DataRow>((assignment) {
+                        return DataRow(
+                          cells: [
+                            DataCell(Text('#${assignment['crew_id']}')),
+                            DataCell(Text(assignment['name'])),
+                            DataCell(
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: assignment['status'] == 'active'
+                                      ? AppColors.successColor
+                                      : assignment['status'] == 'off-duty'
+                                      ? AppColors.warningColor
+                                      : AppColors.infoColor,
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: Text(
+                                  assignment['status'].toUpperCase(),
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            DataCell(Text(assignment['member_count'].toString())),
+                          ],
+                        );
+                      }).toList(),
                     ),
+                  ],
+                ),
               ),
             ),
             actions: [
@@ -533,124 +611,160 @@ class _CrewMemberManagementScreenState extends State<CrewMemberManagementScreen>
             ),
             const SizedBox(height: 16),
 
+            // Search Bar
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: _searchController,
+                        decoration: const InputDecoration(
+                          labelText: 'Search by Last Name',
+                          hintText: 'Enter last name',
+                          prefixIcon: Icon(Icons.search),
+                          border: OutlineInputBorder(),
+                        ),
+                        onSubmitted: (_) => _searchCrewMembers(),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    ElevatedButton(
+                      onPressed: _searchCrewMembers,
+                      child: const Text('Search'),
+                    ),
+                    if (_isSearchMode) ...[
+                      const SizedBox(width: 8),
+                      OutlinedButton.icon(
+                        onPressed: _resetSearch,
+                        icon: const Icon(Icons.clear),
+                        label: const Text('Reset'),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+
             // Crew Members Table
             Expanded(
               child: Card(
                 child: Padding(
                   padding: const EdgeInsets.all(16.0),
                   child: _isLoading
-                    ? const Center(child: CircularProgressIndicator())
-                    : _crewMembers.isEmpty
+                      ? const Center(child: CircularProgressIndicator())
+                      : _crewMembers.isEmpty
                       ? const Center(child: Text('No crew members found'))
                       : DataTable2(
-                          dataRowHeight: 60, // Increase from default (48) to provide more space
-                          columns: const [
-                            DataColumn2(
-                              label: Text('ID'),
-                              size: ColumnSize.S,
-                            ),
-                            DataColumn2(
-                              label: Text('Name'),
-                              size: ColumnSize.L,
-                            ),
-                            DataColumn2(
-                              label: Text('Role'),
-                              size: ColumnSize.M,
-                            ),
-                            DataColumn2(
-                              label: Text('License/Experience'),
-                              size: ColumnSize.M,
-                            ),
-                            DataColumn2(
-                              label: Text('Contact'),
-                              size: ColumnSize.L,
-                            ),
-                            DataColumn2(
-                              label: Text('Crews'),
-                              size: ColumnSize.S,
-                              numeric: true,
-                            ),
-                            DataColumn2(
-                              label: Text('Actions'),
-                              size: ColumnSize.L,
-                            ),
-                          ],
-                          rows: _crewMembers.map<DataRow>((crewMember) {
-                            return DataRow(
-                              cells: [
-                                DataCell(Text('#${crewMember['crew_member_id']}')),
-                                DataCell(Text('${crewMember['first_name']} ${crewMember['last_name']}')),
-                                DataCell(
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                    decoration: BoxDecoration(
-                                      color: crewMember['role'] == 'captain'
-                                        ? AppColors.primaryColor
-                                        : crewMember['role'] == 'pilot'
-                                          ? AppColors.accentColor
-                                          : AppColors.infoColor,
-                                      borderRadius: BorderRadius.circular(4),
-                                    ),
-                                    child: Text(
-                                      _formatRole(crewMember['role']),
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ),
+                    dataRowHeight: 60, // Increase from default (48) to provide more space
+                    columns: const [
+                      DataColumn2(
+                        label: Text('ID'),
+                        size: ColumnSize.S,
+                      ),
+                      DataColumn2(
+                        label: Text('Name'),
+                        size: ColumnSize.L,
+                      ),
+                      DataColumn2(
+                        label: Text('Role'),
+                        size: ColumnSize.M,
+                      ),
+                      DataColumn2(
+                        label: Text('License/Experience'),
+                        size: ColumnSize.M,
+                      ),
+                      DataColumn2(
+                        label: Text('Contact'),
+                        size: ColumnSize.L,
+                      ),
+                      DataColumn2(
+                        label: Text('Crews'),
+                        size: ColumnSize.S,
+                        numeric: true,
+                      ),
+                      DataColumn2(
+                        label: Text('Actions'),
+                        size: ColumnSize.L,
+                      ),
+                    ],
+                    rows: _crewMembers.map<DataRow>((crewMember) {
+                      return DataRow(
+                        cells: [
+                          DataCell(Text('#${crewMember['crew_member_id']}')),
+                          DataCell(Text('${crewMember['first_name']} ${crewMember['last_name']}')),
+                          DataCell(
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: crewMember['role'] == 'captain'
+                                    ? AppColors.primaryColor
+                                    : crewMember['role'] == 'pilot'
+                                    ? AppColors.accentColor
+                                    : AppColors.infoColor,
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Text(
+                                _formatRole(crewMember['role']),
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
                                 ),
-                                DataCell(
-                                  crewMember['role'] == 'captain' || crewMember['role'] == 'pilot'
-                                    ? Text('License: ${crewMember['license_number'] ?? 'N/A'}')
-                                    : Text('Experience: ${crewMember['experience_years']} years'),
+                              ),
+                            ),
+                          ),
+                          DataCell(
+                            crewMember['role'] == 'captain' || crewMember['role'] == 'pilot'
+                                ? Text('License: ${crewMember['license_number'] ?? 'N/A'}')
+                                : Text('Experience: ${crewMember['experience_years']} years'),
+                          ),
+                          DataCell(
+                            FittedBox(
+                              fit: BoxFit.scaleDown,
+                              alignment: Alignment.centerLeft,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(crewMember['email'] ?? 'N/A'),
+                                  Text(crewMember['contact_number'] ?? 'N/A'),
+                                ],
+                              ),
+                            ),
+                          ),
+                          DataCell(Text(crewMember['crew_count'].toString())),
+                          DataCell(
+                            Row(
+                              children: [
+                                IconButton(
+                                  icon: const Icon(Icons.people, color: AppColors.primaryColor),
+                                  tooltip: 'View Assignments',
+                                  onPressed: () => _showAssignmentsDialog(crewMember),
                                 ),
-                                DataCell(
-                                  FittedBox(
-                                    fit: BoxFit.scaleDown,
-                                    alignment: Alignment.centerLeft,
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Text(crewMember['email'] ?? 'N/A'),
-                                        Text(crewMember['contact_number'] ?? 'N/A'),
-                                      ],
-                                    ),
-                                  ),
+                                IconButton(
+                                  icon: const Icon(Icons.edit, color: AppColors.infoColor),
+                                  tooltip: 'Edit Crew Member',
+                                  onPressed: () => _showCrewMemberDialog(crewMember: crewMember),
                                 ),
-                                DataCell(Text(crewMember['crew_count'].toString())),
-                                DataCell(
-                                  Row(
-                                    children: [
-                                      //FIXME
-                                      // IconButton(
-                                      //   icon: const Icon(Icons.people, color: AppColors.primaryColor),
-                                      //   tooltip: 'View Assignments',
-                                      //   onPressed: () => _showAssignmentsDialog(crewMember),
-                                      // ),
-                                      IconButton(
-                                        icon: const Icon(Icons.edit, color: AppColors.infoColor),
-                                        tooltip: 'Edit Crew Member',
-                                        onPressed: () => _showCrewMemberDialog(crewMember: crewMember),
-                                      ),
-                                      IconButton(
-                                        icon: const Icon(Icons.delete, color: AppColors.errorColor),
-                                        tooltip: 'Delete Crew Member',
-                                        onPressed: () => _deleteCrewMember(crewMember),
-                                      ),
-                                    ],
-                                  ),
+                                IconButton(
+                                  icon: const Icon(Icons.delete, color: AppColors.errorColor),
+                                  tooltip: 'Delete Crew Member',
+                                  onPressed: () => _deleteCrewMember(crewMember),
                                 ),
                               ],
-                            );
-                          }).toList(),
-                        ),
+                            ),
+                          ),
+                        ],
+                      );
+                    }).toList(),
+                  ),
                 ),
               ),
             ),
 
             // Pagination
-            if (!_isLoading && _crewMembers.isNotEmpty)
+            if (!_isSearchMode && !_isLoading && _crewMembers.isNotEmpty)
               Padding(
                 padding: const EdgeInsets.only(top: 16.0),
                 child: Row(
@@ -661,24 +775,24 @@ class _CrewMemberManagementScreenState extends State<CrewMemberManagementScreen>
                     IconButton(
                       icon: const Icon(Icons.chevron_left),
                       onPressed: _page > 1
-                        ? () {
-                          setState(() {
-                            _page--;
-                          });
-                          _loadCrewMembers();
-                        }
-                        : null,
+                          ? () {
+                        setState(() {
+                          _page--;
+                        });
+                        _loadCrewMembers();
+                      }
+                          : null,
                     ),
                     IconButton(
                       icon: const Icon(Icons.chevron_right),
                       onPressed: _page < _totalPages
-                        ? () {
-                          setState(() {
-                            _page++;
-                          });
-                          _loadCrewMembers();
-                        }
-                        : null,
+                          ? () {
+                        setState(() {
+                          _page++;
+                        });
+                        _loadCrewMembers();
+                      }
+                          : null,
                     ),
                   ],
                 ),

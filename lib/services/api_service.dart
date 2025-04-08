@@ -360,6 +360,17 @@ class ApiService {
     return await delete('/crew-members/$id');
   }
 
+  Future<Map<String, dynamic>> searchCrewMembersByLastName(String lastName) async {
+    // Debug print to see what's being sent
+    print('Searching for last name: $lastName');
+
+    // Make sure the URL is encoded properly
+    final encodedName = Uri.encodeComponent(lastName);
+    print('Encoded as: $encodedName');
+
+    return await get('/crew-members/search/$encodedName');
+  }
+
   Future<Map<String, dynamic>> getTicketsByFlightNumber(String flightNumber) async {
     return await get('/tickets/flight-number/$flightNumber');
   }
