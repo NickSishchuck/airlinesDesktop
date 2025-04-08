@@ -543,6 +543,7 @@ class _CrewMemberManagementScreenState extends State<CrewMemberManagementScreen>
                     : _crewMembers.isEmpty
                       ? const Center(child: Text('No crew members found'))
                       : DataTable2(
+                          dataRowHeight: 60, // Increase from default (48) to provide more space
                           columns: const [
                             DataColumn2(
                               label: Text('ID'),
@@ -605,24 +606,28 @@ class _CrewMemberManagementScreenState extends State<CrewMemberManagementScreen>
                                     : Text('Experience: ${crewMember['experience_years']} years'),
                                 ),
                                 DataCell(
-                                  Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Text(crewMember['email'] ?? 'N/A'),
-                                      Text(crewMember['contact_number'] ?? 'N/A'),
-                                    ],
+                                  FittedBox(
+                                    fit: BoxFit.scaleDown,
+                                    alignment: Alignment.centerLeft,
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(crewMember['email'] ?? 'N/A'),
+                                        Text(crewMember['contact_number'] ?? 'N/A'),
+                                      ],
+                                    ),
                                   ),
                                 ),
                                 DataCell(Text(crewMember['crew_count'].toString())),
                                 DataCell(
                                   Row(
                                     children: [
-                                      IconButton(
-                                        icon: const Icon(Icons.people, color: AppColors.primaryColor),
-                                        tooltip: 'View Assignments',
-                                        onPressed: () => _showAssignmentsDialog(crewMember),
-                                      ),
+                                      //FIXME
+                                      // IconButton(
+                                      //   icon: const Icon(Icons.people, color: AppColors.primaryColor),
+                                      //   tooltip: 'View Assignments',
+                                      //   onPressed: () => _showAssignmentsDialog(crewMember),
+                                      // ),
                                       IconButton(
                                         icon: const Icon(Icons.edit, color: AppColors.infoColor),
                                         tooltip: 'Edit Crew Member',
