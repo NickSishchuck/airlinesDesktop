@@ -1190,10 +1190,10 @@ class _TicketsScreenState extends State<TicketsScreen> {
                             ? const Center(child: Text('No tickets found'))
                             : DataTable2(
                           columns: const [
-                            DataColumn2(
-                              label: Text('Ticket ID'),
-                              size: ColumnSize.S,
-                            ),
+                            // DataColumn2(
+                            //   label: Text('Ticket ID'),
+                            //   size: ColumnSize.S,
+                            // ),
                             DataColumn2(
                               label: Text('Flight'),
                               size: ColumnSize.M,
@@ -1226,7 +1226,7 @@ class _TicketsScreenState extends State<TicketsScreen> {
                           rows: _tickets.map((ticket) {
                             return DataRow(
                               cells: [
-                                DataCell(Text('#${ticket.ticketId}')),
+                                //DataCell(Text('#${ticket.ticketId}')),
                                 DataCell(
                                   ticket.flightNumber != null
                                       ? Text('${ticket.flightNumber}\n${ticket.origin} → ${ticket.destination}')
