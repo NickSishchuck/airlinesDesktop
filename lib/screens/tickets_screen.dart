@@ -231,6 +231,16 @@ class _TicketsScreenState extends State<TicketsScreen> {
     final TextEditingController passengerIdController = TextEditingController(text: isEditing && ticket.passengerId != null ? ticket.passengerId.toString() : '');
     final TextEditingController flightIdController = TextEditingController(text: isEditing && ticket.flightId != null ? ticket.flightId.toString() : '');
 
+    // Additional controllers for display purposes only (might be null in original ticket)
+    final TextEditingController passengerNameController = TextEditingController(text: isEditing ? ticket.passengerName ?? 'Unknown' : '');
+    final TextEditingController passportNumberController = TextEditingController(text: isEditing ? ticket.passportNumber ?? 'N/A' : '');
+    final TextEditingController flightNumberController = TextEditingController(text: isEditing ? ticket.flightNumber ?? 'Unknown' : '');
+    final TextEditingController routeController = TextEditingController(
+        text: isEditing && ticket.origin != null && ticket.destination != null
+            ? '${ticket.origin} → ${ticket.destination}'
+            : ''
+    );
+
     String ticketClass = isEditing ? ticket.ticketClass : 'economy';
     String paymentStatus = isEditing ? ticket.paymentStatus : 'pending';
 
@@ -244,31 +254,246 @@ class _TicketsScreenState extends State<TicketsScreen> {
               content: SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    TextField(
-                      controller: passengerIdController,
-                      decoration: const InputDecoration(
-                        labelText: 'Passenger ID',
+                    // SECTION 1: FLIGHT INFORMATION (Critical, rarely changed)
+                    if (isEditing) ...[
+                      Container(
+                        width: double.infinity,
+                        padding: EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.blue.shade50,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: Colors.blue.shade200),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Icon(Icons.flight, color: AppColors.primaryColor),
+                                SizedBox(width: 8),
+                                Text(
+                                  'Flight Information',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                    color: AppColors.primaryColor,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            SizedBox(height: 4),
+                            Text(
+                              'These details identify the flight and cannot be changed',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontStyle: FontStyle.italic,
+                                color: Colors.grey.shade700,
+                              ),
+                            ),
+                            SizedBox(height: 16),
+
+                            // Flight ID - Read only
+                            TextField(
+                              controller: flightIdController,
+                              decoration: InputDecoration(
+                                labelText: 'Flight ID',
+                                border: OutlineInputBorder(),
+                                filled: true,
+                                fillColor: Colors.white,
+                                prefixIcon: Icon(Icons.numbers, color: Colors.grey),
+                              ),
+                              readOnly: true,
+                              enabled: false,
+                            ),
+                            SizedBox(height: 12),
+
+                            // Flight Number - Read only
+                            TextField(
+                              controller: flightNumberController,
+                              decoration: InputDecoration(
+                                labelText: 'Flight Number',
+                                border: OutlineInputBorder(),
+                                filled: true,
+                                fillColor: Colors.white,
+                                prefixIcon: Icon(Icons.flight_takeoff, color: Colors.grey),
+                              ),
+                              readOnly: true,
+                              enabled: false,
+                            ),
+                            SizedBox(height: 12),
+
+                            // Route - Read only
+                            TextField(
+                              controller: routeController,
+                              decoration: InputDecoration(
+                                labelText: 'Route',
+                                border: OutlineInputBorder(),
+                                filled: true,
+                                fillColor: Colors.white,
+                                prefixIcon: Icon(Icons.route, color: Colors.grey),
+                              ),
+                              readOnly: true,
+                              enabled: false,
+                            ),
+                          ],
+                        ),
                       ),
-                      keyboardType: TextInputType.number,
-                    ),
-                    TextField(
-                      controller: flightIdController,
-                      decoration: const InputDecoration(
-                        labelText: 'Flight ID',
+                      SizedBox(height: 24),
+
+                      // SECTION 2: PASSENGER INFORMATION (Critical, rarely changed)
+                      Container(
+                        width: double.infinity,
+                        padding: EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.green.shade50,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: Colors.green.shade200),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Icon(Icons.person, color: AppColors.accentColor),
+                                SizedBox(width: 8),
+                                Text(
+                                  'Passenger Information',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                    color: AppColors.accentColor,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            SizedBox(height: 4),
+                            Text(
+                              'Passenger details are linked to this ticket',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontStyle: FontStyle.italic,
+                                color: Colors.grey.shade700,
+                              ),
+                            ),
+                            SizedBox(height: 16),
+
+                            // Passenger ID - Read only
+                            TextField(
+                              controller: passengerIdController,
+                              decoration: InputDecoration(
+                                labelText: 'Passenger ID',
+                                border: OutlineInputBorder(),
+                                filled: true,
+                                fillColor: Colors.white,
+                                prefixIcon: Icon(Icons.numbers, color: Colors.grey),
+                              ),
+                              readOnly: true,
+                              enabled: false,
+                            ),
+                            SizedBox(height: 12),
+
+                            // Passenger Name - Read only
+                            if (ticket.passengerName != null) ...[
+                              TextField(
+                                controller: passengerNameController,
+                                decoration: InputDecoration(
+                                  labelText: 'Passenger Name',
+                                  border: OutlineInputBorder(),
+                                  filled: true,
+                                  fillColor: Colors.white,
+                                  prefixIcon: Icon(Icons.person_outline, color: Colors.grey),
+                                ),
+                                readOnly: true,
+                                enabled: false,
+                              ),
+                              SizedBox(height: 12),
+                            ],
+
+                            // Passport Number - Read only
+                            if (ticket.passportNumber != null) ...[
+                              TextField(
+                                controller: passportNumberController,
+                                decoration: InputDecoration(
+                                  labelText: 'Passport Number',
+                                  border: OutlineInputBorder(),
+                                  filled: true,
+                                  fillColor: Colors.white,
+                                  prefixIcon: Icon(Icons.book, color: Colors.grey),
+                                ),
+                                readOnly: true,
+                                enabled: false,
+                              ),
+                            ],
+                          ],
+                        ),
                       ),
-                      keyboardType: TextInputType.number,
+                    ] else ...[
+                      // CREATE MODE: Show editable fields for flight and passenger
+                      Text(
+                        'Basic Information',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
+                      SizedBox(height: 12),
+
+                      TextField(
+                        controller: flightIdController,
+                        decoration: const InputDecoration(
+                          labelText: 'Flight ID',
+                          border: OutlineInputBorder(),
+                          helperText: 'Enter the ID of an existing flight',
+                        ),
+                        keyboardType: TextInputType.number,
+                      ),
+                      SizedBox(height: 12),
+
+                      TextField(
+                        controller: passengerIdController,
+                        decoration: const InputDecoration(
+                          labelText: 'Passenger ID',
+                          border: OutlineInputBorder(),
+                          helperText: 'Enter the ID of an existing passenger',
+                        ),
+                        keyboardType: TextInputType.number,
+                      ),
+                    ],
+
+                    SizedBox(height: 24),
+                    Divider(),
+                    SizedBox(height: 16),
+
+                    // SECTION 3: TICKET DETAILS (Frequently edited)
+                    Text(
+                      'Ticket Details',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
                     ),
+                    SizedBox(height: 12),
+
+                    // Seat Number - Always editable
                     TextField(
                       controller: seatNumberController,
                       decoration: const InputDecoration(
                         labelText: 'Seat Number',
+                        border: OutlineInputBorder(),
+                        prefixIcon: Icon(Icons.airline_seat_recline_normal),
                       ),
                     ),
+                    SizedBox(height: 12),
+
+                    // Ticket Class - Always editable
                     DropdownButtonFormField<String>(
                       value: ticketClass,
                       decoration: const InputDecoration(
                         labelText: 'Class',
+                        border: OutlineInputBorder(),
+                        prefixIcon: Icon(Icons.class_),
                       ),
                       items: const [
                         DropdownMenuItem(value: 'economy', child: Text('Economy')),
@@ -281,18 +506,28 @@ class _TicketsScreenState extends State<TicketsScreen> {
                         });
                       },
                     ),
+                    SizedBox(height: 12),
+
+                    // Price - Always editable
                     TextField(
                       controller: priceController,
                       decoration: const InputDecoration(
                         labelText: 'Price',
                         prefixText: '\$',
+                        border: OutlineInputBorder(),
+                        prefixIcon: Icon(Icons.attach_money),
                       ),
                       keyboardType: TextInputType.number,
                     ),
+                    SizedBox(height: 12),
+
+                    // Payment Status - Always editable
                     DropdownButtonFormField<String>(
                       value: paymentStatus,
                       decoration: const InputDecoration(
                         labelText: 'Payment Status',
+                        border: OutlineInputBorder(),
+                        prefixIcon: Icon(Icons.payment),
                       ),
                       items: const [
                         DropdownMenuItem(value: 'pending', child: Text('Pending')),
@@ -305,6 +540,33 @@ class _TicketsScreenState extends State<TicketsScreen> {
                         });
                       },
                     ),
+
+                    if (isEditing) ...[
+                      SizedBox(height: 24),
+                      Container(
+                        padding: EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.orange.shade50,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: Colors.orange.shade200),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(Icons.info_outline, color: AppColors.warningColor),
+                            SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                'To change flight or passenger, please delete this ticket and create a new one.',
+                                style: TextStyle(
+                                  color: AppColors.warningColor,
+                                  fontSize: 13,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -315,13 +577,13 @@ class _TicketsScreenState extends State<TicketsScreen> {
                   },
                   child: const Text('Cancel'),
                 ),
-                TextButton(
+                ElevatedButton(
                   onPressed: () async {
                     // Validate inputs
                     if (seatNumberController.text.isEmpty ||
                         priceController.text.isEmpty ||
-                        passengerIdController.text.isEmpty ||
-                        flightIdController.text.isEmpty) {
+                        (flightIdController.text.isEmpty && !isEditing) ||
+                        (passengerIdController.text.isEmpty && !isEditing)) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
                           content: Text('Please fill all required fields'),
@@ -331,14 +593,11 @@ class _TicketsScreenState extends State<TicketsScreen> {
                       return;
                     }
 
-                    final passengerId = int.tryParse(passengerIdController.text);
-                    final flightId = int.tryParse(flightIdController.text);
                     final price = double.tryParse(priceController.text);
-
-                    if (passengerId == null || flightId == null || price == null) {
+                    if (price == null) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
-                          content: Text('Invalid number format'),
+                          content: Text('Price must be a valid number'),
                           backgroundColor: AppColors.warningColor,
                         ),
                       );
@@ -346,10 +605,15 @@ class _TicketsScreenState extends State<TicketsScreen> {
                     }
 
                     try {
-                      // Create ticket data
-                      final ticketData = {
-                        'passenger_id': passengerId,
-                        'flight_id': flightId,
+                      // Create ticket data - for editing, we only update the editable fields
+                      final ticketData = isEditing ? {
+                        'seat_number': seatNumberController.text,
+                        'class': ticketClass,
+                        'price': price,
+                        'payment_status': paymentStatus,
+                      } : {
+                        'passenger_id': int.parse(passengerIdController.text),
+                        'flight_id': int.parse(flightIdController.text),
                         'seat_number': seatNumberController.text,
                         'class': ticketClass,
                         'price': price,

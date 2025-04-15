@@ -278,24 +278,117 @@ class _FlightsScreenState extends State<FlightsScreen> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    TextField(
-                      controller: flightNumberController,
-                      decoration: const InputDecoration(
-                        labelText: 'Flight Number',
+                    // If editing, show flight identifier section
+                    if (isEditing) ...[
+                      Container(
+                        padding: EdgeInsets.all(5),
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade100,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: Colors.grey.shade300),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Icon(Icons.info_outline, color: AppColors.infoColor),
+                                SizedBox(width: 8),
+                                Text(
+                                  'Flight Identifiers',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColors.infoColor,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            SizedBox(height: 4),
+                            Text(
+                              'These critical details should rarely be changed',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontStyle: FontStyle.italic,
+                                color: Colors.grey.shade700,
+                              ),
+                            ),
+                            SizedBox(height: 12),
+                            // Flight number field (read-only in edit mode)
+                            TextField(
+                              controller: flightNumberController,
+                              decoration: const InputDecoration(
+                                labelText: 'Flight Number',
+                                border: OutlineInputBorder(),
+                                filled: true,
+                                fillColor: Colors.white,
+                              ),
+                              readOnly: true, // Always read-only when editing
+                            ),
+                            SizedBox(height: 12),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: TextField(
+                                    controller: originController,
+                                    decoration: const InputDecoration(
+                                      labelText: 'Origin',
+                                      border: OutlineInputBorder(),
+                                      filled: true,
+                                      fillColor: Colors.white,
+                                    ),
+                                    readOnly: true, // Always read-only when editing
+                                  ),
+                                ),
+                                SizedBox(width: 8),
+                                Icon(Icons.arrow_forward, color: Colors.grey),
+                                SizedBox(width: 8),
+                                Expanded(
+                                  child: TextField(
+                                    controller: destinationController,
+                                    decoration: const InputDecoration(
+                                      labelText: 'Destination',
+                                      border: OutlineInputBorder(),
+                                      filled: true,
+                                      fillColor: Colors.white,
+                                    ),
+                                    readOnly: true, // Always read-only when editing
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                    TextField(
-                      controller: originController,
-                      decoration: const InputDecoration(
-                        labelText: 'Origin',
+                      SizedBox(height: 24),
+                      Divider(),
+                      SizedBox(height: 16),
+                    ] else ...[
+                      // If creating new flight, show normal fields
+                      TextField(
+                        controller: flightNumberController,
+                        decoration: const InputDecoration(
+                          labelText: 'Flight Number',
+                          border: OutlineInputBorder(),
+                        ),
                       ),
-                    ),
-                    TextField(
-                      controller: destinationController,
-                      decoration: const InputDecoration(
-                        labelText: 'Destination',
+                      SizedBox(height: 12),
+                      TextField(
+                        controller: originController,
+                        decoration: const InputDecoration(
+                          labelText: 'Origin',
+                          border: OutlineInputBorder(),
+                        ),
                       ),
-                    ),
+                      SizedBox(height: 12),
+                      TextField(
+                        controller: destinationController,
+                        decoration: const InputDecoration(
+                          labelText: 'Destination',
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                      SizedBox(height: 16),
+                    ],
                     Row(
                       children: [
                         Expanded(
