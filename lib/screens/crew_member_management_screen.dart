@@ -392,15 +392,46 @@ class _CrewMemberManagementScreenState extends State<CrewMemberManagementScreen>
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Confirm Delete'),
-          content: Text('Are you sure you want to delete crew member ${crewMember['first_name']} ${crewMember['last_name']}?'),
+          title: Row(
+            children: [
+              Icon(Icons.warning, color: AppColors.errorColor),
+              SizedBox(width: 8),
+              Text('Confirm Delete'),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Are you sure you want to delete crew member "${crewMember['first_name']} ${crewMember['last_name']}"?'),
+              SizedBox(height: 8),
+              Text(
+                'Crew Member Details:',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              Text('• Role: ${_formatRole(crewMember['role'])}'),
+              if (crewMember['license_number'] != null)
+                Text('• License: ${crewMember['license_number']}'),
+              Text('• Experience: ${crewMember['experience_years']} years'),
+              Text('• Assigned to ${crewMember['crew_count']} crews'),
+              SizedBox(height: 12),
+              Text(
+                'This action cannot be undone and will remove this member from all assigned crews.',
+                style: TextStyle(color: AppColors.errorColor),
+              ),
+            ],
+          ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(false),
               child: const Text('Cancel'),
             ),
-            TextButton(
+            ElevatedButton(
               onPressed: () => Navigator.of(context).pop(true),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.errorColor,
+                foregroundColor: Colors.white,
+              ),
               child: const Text('Delete'),
             ),
           ],

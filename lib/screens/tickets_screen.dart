@@ -464,19 +464,35 @@ class _TicketsScreenState extends State<TicketsScreen> {
   }
 
   Future<void> _deleteTicket(Ticket ticket) async {
+    // Get additional ticket information to display in the confirmation dialog
+    String ticketInfo = '';
+    if (ticket.flightNumber != null && ticket.passengerName != null) {
+      ticketInfo = '\n\nFlight: ${ticket.flightNumber}\nPassenger: ${ticket.passengerName}';
+    }
+
     final bool confirm = await showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Confirm Delete'),
-          content: Text('Are you sure you want to delete ticket #${ticket.ticketId}?'),
+          title: Row(
+            children: [
+              Icon(Icons.warning, color: AppColors.errorColor),
+              SizedBox(width: 8),
+              Text('Confirm Delete'),
+            ],
+          ),
+          content: Text('Are you sure you want to delete ticket #${ticket.ticketId}?$ticketInfo\n\nThis action cannot be undone.'),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(false),
               child: const Text('Cancel'),
             ),
-            TextButton(
+            ElevatedButton(
               onPressed: () => Navigator.of(context).pop(true),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.errorColor,
+                foregroundColor: Colors.white,
+              ),
               child: const Text('Delete'),
             ),
           ],

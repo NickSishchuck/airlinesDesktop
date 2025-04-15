@@ -174,15 +174,44 @@ class _CrewManagementScreenState extends State<CrewManagementScreen> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Confirm Delete'),
-          content: Text('Are you sure you want to delete crew ${crew.name}? This action cannot be undone.'),
+          title: Row(
+            children: [
+              Icon(Icons.warning, color: AppColors.errorColor),
+              SizedBox(width: 8),
+              Text('Confirm Delete'),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Are you sure you want to delete crew "${crew.name}"?'),
+              SizedBox(height: 8),
+              Text(
+                'Crew Details:',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              Text('• Status: ${crew.status}'),
+              Text('• Members: ${crew.memberCount}'),
+              Text('• Aircraft: ${crew.aircraftCount}'),
+              SizedBox(height: 12),
+              Text(
+                'This action cannot be undone and may affect scheduled flights.',
+                style: TextStyle(color: AppColors.errorColor),
+              ),
+            ],
+          ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(false),
               child: const Text('Cancel'),
             ),
-            TextButton(
+            ElevatedButton(
               onPressed: () => Navigator.of(context).pop(true),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.errorColor,
+                foregroundColor: Colors.white,
+              ),
               child: const Text('Delete'),
             ),
           ],
@@ -331,19 +360,43 @@ class _CrewManagementScreenState extends State<CrewManagementScreen> {
   }
 
   Future<void> _removeCrewMember(int crewId, int memberId, Function refreshCallback) async {
+    // First, get crew and member info to show in the dialog
+    final crewInfo = _crews.firstWhere((crew) => crew.crewId == crewId).name;
+
     final bool confirm = await showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Confirm Remove'),
-          content: const Text('Are you sure you want to remove this crew member?'),
+          title: Row(
+            children: [
+              Icon(Icons.warning, color: AppColors.warningColor),
+              SizedBox(width: 8),
+              Text('Confirm Removal'),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Are you sure you want to remove this crew member from "${crewInfo}"?'),
+              SizedBox(height: 12),
+              Text(
+                'The crew member will remain in the system but will no longer be assigned to this crew.',
+                style: TextStyle(fontStyle: FontStyle.italic),
+              ),
+            ],
+          ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(false),
               child: const Text('Cancel'),
             ),
-            TextButton(
+            ElevatedButton(
               onPressed: () => Navigator.of(context).pop(true),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.warningColor,
+                foregroundColor: Colors.white,
+              ),
               child: const Text('Remove'),
             ),
           ],

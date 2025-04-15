@@ -523,27 +523,55 @@ class _FlightsScreenState extends State<FlightsScreen> {
   }
 
   Future<void> _cancelFlight(Flight flight) async {
-    try {
-      EasyLoading.show(status: 'Canceling flight...');
-      await _apiService.cancelFlight(flight.flightId);
-      EasyLoading.dismiss();
+    // Add confirmation dialog
+    final bool confirm = await showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Confirm Cancellation'),
+          content: Text('Are you sure you want to cancel flight ${flight.flightNumber}? This action cannot be undone.'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('No'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: const Text('Yes, Cancel Flight'),
+              style: TextButton.styleFrom(
+                foregroundColor: Colors.white,
+                backgroundColor: Colors.redAccent,
+              ),
+            ),
+          ],
+        );
+      },
+    ) ?? false;
 
-      _loadFlights();
+    // Only proceed if user confirmed
+    if (confirm) {
+      try {
+        EasyLoading.show(status: 'Canceling flight...');
+        await _apiService.cancelFlight(flight.flightId);
+        EasyLoading.dismiss();
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Flight canceled successfully'),
-          backgroundColor: AppColors.successColor,
-        ),
-      );
-    } catch (e) {
-      EasyLoading.dismiss();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error canceling flight: ${e.toString()}'),
-          backgroundColor: AppColors.errorColor,
-        ),
-      );
+        _loadFlights();
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Flight canceled successfully'),
+            backgroundColor: AppColors.successColor,
+          ),
+        );
+      } catch (e) {
+        EasyLoading.dismiss();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error canceling flight: ${e.toString()}'),
+            backgroundColor: AppColors.errorColor,
+          ),
+        );
+      }
     }
   }
 
@@ -562,6 +590,10 @@ class _FlightsScreenState extends State<FlightsScreen> {
             TextButton(
               onPressed: () => Navigator.of(context).pop(true),
               child: const Text('Delete'),
+              style: TextButton.styleFrom(
+                foregroundColor: Colors.white,
+                backgroundColor: Colors.redAccent,
+              )
             ),
           ],
         );
