@@ -44,6 +44,125 @@ class _TicketsScreenState extends State<TicketsScreen> {
     super.dispose();
   }
 
+  Future<void> _loadAvailableSeats(int flightId, String seatClass) async {
+    try {
+      EasyLoading.show(status: 'Loading available seats...');
+      final response = await _apiService.getAvailableSeatsByClass(flightId, seatClass);
+      EasyLoading.dismiss();
+
+      if (response['success']) {
+        final availableSeats = List<String>.from(response['data']['available_seats']);
+
+        if (availableSeats.isEmpty) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('No ${seatClass.replaceAll('_', ' ')} seats available'),
+              backgroundColor: AppColors.warningColor,
+            ),
+          );
+          return;
+        }
+
+        // Show available seats dialog
+        final selected = await showDialog<String>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: Text('Available ${_formatTicketClass(seatClass)} Seats'),
+            content: SizedBox(
+              width: 300,
+              height: 400,
+              child: SingleChildScrollView(
+                child: Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: availableSeats.map((seat) {
+                    final Color classColor = _getClassColor(seatClass);
+
+                    return InkWell(
+                      onTap: () => Navigator.of(context).pop(seat),
+                      child: Container(
+                        width: 45,
+                        height: 45,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: classColor.withOpacity(0.1),
+                          border: Border.all(color: classColor),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          seat,
+                          style: TextStyle(
+                            color: Colors.red,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('Cancel'),
+              ),
+            ],
+          ),
+        );
+
+        // Update seat number if a seat was selected
+        // if (selected != null && mounted) {
+        //   setState(() {
+        //     seatNumberController.text = selected;
+        //   });
+        //}
+        //FIXME
+      } else {
+        throw Exception(response['error'] ?? 'Failed to load available seats');
+      }
+    } catch (e) {
+      EasyLoading.dismiss();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error loading seats: ${e.toString()}'),
+          backgroundColor: AppColors.errorColor,
+        ),
+      );
+    }
+  }
+
+// Add a helper to format ticket classes
+  String _formatTicketClass(String ticketClass) {
+    switch (ticketClass) {
+      case 'economy':
+        return 'Economy';
+      case 'business':
+        return 'Business';
+      case 'first':
+        return 'First Class';
+      case 'woman_only':
+        return 'Woman Only';
+      default:
+        return ticketClass.replaceAll('_', ' ');
+    }
+  }
+
+// Add a helper to get class colors
+  Color _getClassColor(String ticketClass) {
+    switch (ticketClass) {
+      case 'economy':
+        return Colors.green;
+      case 'business':
+        return Colors.blue;
+      case 'first':
+        return Colors.indigo;
+      case 'woman_only':
+        return Colors.pink;
+      default:
+        return Colors.grey;
+    }
+  }
   Future<void> _loadTickets() async {
     setState(() {
       _isLoading = true;
@@ -78,6 +197,7 @@ class _TicketsScreenState extends State<TicketsScreen> {
       );
     }
   }
+
 
   Future<void> _searchTickets() async {
     setState(() {
@@ -479,13 +599,36 @@ class _TicketsScreenState extends State<TicketsScreen> {
                     // Seat Number - Always editable
                     TextField(
                       controller: seatNumberController,
-                      decoration: const InputDecoration(
+                      decoration: InputDecoration(
                         labelText: 'Seat Number',
                         border: OutlineInputBorder(),
-                        prefixIcon: Icon(Icons.airline_seat_recline_normal),
+                        prefixIcon: const Icon(Icons.airline_seat_recline_normal),
+                        suffixIcon: IconButton(
+                          icon: const Icon(Icons.list),
+                          tooltip: 'Select from available seats',
+                          onPressed: () {
+                            // Make sure we have a flight ID first
+                            if (flightIdController.text.isEmpty && !isEditing) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Please select a flight first'),
+                                  backgroundColor: AppColors.warningColor,
+                                ),
+                              );
+                              return;
+                            }
+
+                            final flightId = isEditing
+                                ? ticket!.flightId!
+                                : int.tryParse(flightIdController.text);
+
+                            if (flightId != null) {
+                              _loadAvailableSeats(flightId, ticketClass);
+                            }
+                          },
+                        ),
                       ),
                     ),
-                    SizedBox(height: 12),
 
                     // Ticket Class - Always editable
                     DropdownButtonFormField<String>(
@@ -499,6 +642,7 @@ class _TicketsScreenState extends State<TicketsScreen> {
                         DropdownMenuItem(value: 'economy', child: Text('Economy')),
                         DropdownMenuItem(value: 'business', child: Text('Business')),
                         DropdownMenuItem(value: 'first', child: Text('First Class')),
+                        DropdownMenuItem(value: 'woman_only', child: Text('Woman Only')),
                       ],
                       onChanged: (value) {
                         setState(() {

@@ -1,10 +1,14 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:data_table_2/data_table_2.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
+import '../models/seat_stats.dart';
 import '../services/api_service.dart';
 import '../models/flight.dart';
 import '../utils/constants.dart';
+import '../models/seat_map.dart';
+import '../models/seat_stats.dart';
 
 class FlightsScreen extends StatefulWidget {
   const FlightsScreen({Key? key}) : super(key: key);
@@ -116,6 +120,29 @@ class _FlightsScreenState extends State<FlightsScreen> {
     );
   }
 
+  // Add this method to load seat maps for flights
+  Future<void> _loadFlightSeatMaps() async {
+    // Only load for flights without seat maps
+    final flightsToLoad = _flights.where((f) => f.seatMap == null).toList();
+
+    for (final flight in flightsToLoad) {
+      try {
+        final response = await _apiService.getFlightSeatMap(flight.flightId);
+
+        if (response['success'] && mounted) {
+          setState(() {
+            flight.seatMap = SeatMap.fromJson(response['data']);
+          });
+        }
+      } catch (e) {
+        // Seat map not initialized yet - this is expected for some flights
+        if (kDebugMode) {
+          print('No seat map for flight ${flight.flightId}: ${e.toString()}');
+        }
+      }
+    }
+  }
+
   Future<void> _loadFlights() async {
     setState(() {
       _isLoading = true;
@@ -133,6 +160,9 @@ class _FlightsScreenState extends State<FlightsScreen> {
           _totalPages = response['pagination']['totalPages'] ?? 1;
           _isLoading = false;
         });
+
+        // Load seat maps after loading flights
+        _loadFlightSeatMaps();
       } else {
         throw Exception('Failed to load flights');
       }
@@ -147,6 +177,408 @@ class _FlightsScreenState extends State<FlightsScreen> {
         ),
       );
     }
+  }
+
+  // Add this method to initialize flight seats
+  Future<void> _initializeFlightSeats(Flight flight) async {
+    // Show confirmation dialog
+    final bool confirm = await showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Initialize Flight Seats'),
+        content: Text('Are you sure you want to initialize seats for flight ${flight.flightNumber}?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Initialize'),
+          ),
+        ],
+      ),
+    ) ?? false;
+
+    if (confirm) {
+      try {
+        EasyLoading.show(status: 'Initializing seats...');
+        final response = await _apiService.initializeFlightSeats(flight.flightId);
+        EasyLoading.dismiss();
+
+        if (response['success']) {
+          // Update the flight's seat map in our state
+          setState(() {
+            flight.seatMap = SeatMap.fromJson(response['data']);
+          });
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Seats initialized successfully'),
+              backgroundColor: AppColors.successColor,
+            ),
+          );
+        } else {
+          throw Exception(response['error'] ?? 'Failed to initialize seats');
+        }
+      } catch (e) {
+        EasyLoading.dismiss();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error initializing seats: ${e.toString()}'),
+            backgroundColor: AppColors.errorColor,
+          ),
+        );
+      }
+    }
+  }
+
+// Add this method to view the seat map
+  void _viewSeatMap(Flight flight) {
+    if (flight.seatMap == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Seats not initialized yet'),
+          backgroundColor: AppColors.warningColor,
+        ),
+      );
+      return;
+    }
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Seat Map: ${flight.flightNumber}'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Route and time info
+              Text(
+                '${flight.origin} → ${flight.destination}',
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              ),
+              Text(
+                '${DateFormat('MMM dd, HH:mm').format(flight.departureTime)} - ${DateFormat('MMM dd, HH:mm').format(flight.arrivalTime)}',
+                style: const TextStyle(color: Colors.grey),
+              ),
+              const SizedBox(height: 16),
+
+              // Seat stats table
+              if (flight.seatMap?.stats != null) ...[
+                const Text(
+                  'Seat Availability',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                ),
+                const SizedBox(height: 8),
+                _buildSeatStatsTable(flight.seatMap!.stats!),
+                const SizedBox(height: 20),
+              ],
+
+              // Class prices
+              if (flight.seatMap?.prices != null) ...[
+                const Text(
+                  'Class Prices',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                ),
+                const SizedBox(height: 8),
+                _buildPricesTable(flight.seatMap!.prices!),
+                const SizedBox(height: 20),
+              ],
+
+              // Seat map visualization
+              const Text(
+                'Seat Map',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              ),
+              const SizedBox(height: 8),
+              _buildSeatMapVisualization(flight.seatMap!),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Close'),
+          ),
+        ],
+      ),
+    );
+  }
+
+// Helper methods for seat visualization
+  Widget _buildSeatStatsTable(SeatStats stats) {
+    return Table(
+      border: TableBorder.all(color: Colors.grey.shade300),
+      columnWidths: const {
+        0: FlexColumnWidth(1.2),
+        1: FlexColumnWidth(1),
+        2: FlexColumnWidth(1),
+        3: FlexColumnWidth(1),
+        4: FlexColumnWidth(1.2),
+      },
+      children: [
+        // Header row
+        TableRow(
+          decoration: BoxDecoration(color: Colors.grey.shade100),
+          children: const [
+            TableCell(
+              child: Padding(
+                padding: EdgeInsets.all(8.0),
+                child: Text('Class', style: TextStyle(fontWeight: FontWeight.bold)),
+              ),
+            ),
+            TableCell(
+              child: Padding(
+                padding: EdgeInsets.all(8.0),
+                child: Text('Available', style: TextStyle(fontWeight: FontWeight.bold)),
+              ),
+            ),
+            TableCell(
+              child: Padding(
+                padding: EdgeInsets.all(8.0),
+                child: Text('Booked', style: TextStyle(fontWeight: FontWeight.bold)),
+              ),
+            ),
+            TableCell(
+              child: Padding(
+                padding: EdgeInsets.all(8.0),
+                child: Text('Total', style: TextStyle(fontWeight: FontWeight.bold)),
+              ),
+            ),
+            TableCell(
+              child: Padding(
+                padding: EdgeInsets.all(8.0),
+                child: Text('Occupancy', style: TextStyle(fontWeight: FontWeight.bold)),
+              ),
+            ),
+          ],
+        ),
+        // First Class
+        if (stats.first != null)
+          _buildStatsRow('First', stats.first!, Colors.indigo.shade100),
+        // Business Class
+        if (stats.business != null)
+          _buildStatsRow('Business', stats.business!, Colors.blue.shade100),
+        // Economy Class
+        if (stats.economy != null)
+          _buildStatsRow('Economy', stats.economy!, Colors.green.shade100),
+        // Woman Only Class
+        if (stats.womanOnly != null)
+          _buildStatsRow('Woman Only', stats.womanOnly!, Colors.pink.shade100),
+        // Total
+        if (stats.total != null)
+          TableRow(
+            decoration: BoxDecoration(color: Colors.grey.shade200),
+            children: [
+              const TableCell(
+                child: Padding(
+                  padding: EdgeInsets.all(8.0),
+                  child: Text('TOTAL', style: TextStyle(fontWeight: FontWeight.bold)),
+                ),
+              ),
+              TableCell(
+                child: Padding(
+                  padding: EdgeInsets.all(8.0),
+                  child: Text(stats.total!.available.toString()),
+                ),
+              ),
+              TableCell(
+                child: Padding(
+                  padding: EdgeInsets.all(8.0),
+                  child: Text(stats.total!.booked.toString()),
+                ),
+              ),
+              TableCell(
+                child: Padding(
+                  padding: EdgeInsets.all(8.0),
+                  child: Text(stats.total!.total.toString()),
+                ),
+              ),
+              TableCell(
+                child: Padding(
+                  padding: EdgeInsets.all(8.0),
+                  child: Text('${stats.total!.occupancyPercentage}%'),
+                ),
+              ),
+            ],
+          ),
+      ],
+    );
+  }
+
+  TableRow _buildStatsRow(String className, ClassStats stats, Color bgColor) {
+    return TableRow(
+      decoration: BoxDecoration(color: bgColor),
+      children: [
+        TableCell(
+          child: Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Text(className),
+          ),
+        ),
+        TableCell(
+          child: Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Text(stats.available.toString()),
+          ),
+        ),
+        TableCell(
+          child: Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Text(stats.booked.toString()),
+          ),
+        ),
+        TableCell(
+          child: Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Text(stats.total.toString()),
+          ),
+        ),
+        TableCell(
+          child: Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Text('${stats.occupancyPercentage}%'),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPricesTable(Map<String, double> prices) {
+    return Table(
+      border: TableBorder.all(color: Colors.grey.shade300),
+      columnWidths: const {
+        0: FlexColumnWidth(2),
+        1: FlexColumnWidth(1),
+      },
+      children: [
+        // Header row
+        TableRow(
+          decoration: BoxDecoration(color: Colors.grey.shade100),
+          children: const [
+            TableCell(
+              child: Padding(
+                padding: EdgeInsets.all(8.0),
+                child: Text('Class', style: TextStyle(fontWeight: FontWeight.bold)),
+              ),
+            ),
+            TableCell(
+              child: Padding(
+                padding: EdgeInsets.all(8.0),
+                child: Text('Price', style: TextStyle(fontWeight: FontWeight.bold)),
+              ),
+            ),
+          ],
+        ),
+        // Price rows
+        if (prices.containsKey('first'))
+          _buildPriceRow('First Class', prices['first']!, Colors.indigo.shade100),
+        if (prices.containsKey('business'))
+          _buildPriceRow('Business Class', prices['business']!, Colors.blue.shade100),
+        if (prices.containsKey('economy'))
+          _buildPriceRow('Economy Class', prices['economy']!, Colors.green.shade100),
+        if (prices.containsKey('woman_only'))
+          _buildPriceRow('Woman Only', prices['woman_only']!, Colors.pink.shade100),
+      ],
+    );
+  }
+
+  TableRow _buildPriceRow(String className, double price, Color bgColor) {
+    return TableRow(
+      decoration: BoxDecoration(color: bgColor),
+      children: [
+        TableCell(
+          child: Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Text(className),
+          ),
+        ),
+        TableCell(
+          child: Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Text('\$${price.toStringAsFixed(2)}'),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSeatMapVisualization(SeatMap seatMap) {
+    // Simple version - this could be enhanced with actual seat layout graphics
+    return Column(
+      children: [
+        // First Class
+        if (seatMap.seatsByClass.containsKey('first'))
+          _buildSeatClassSection('First Class', seatMap.seatsByClass['first']!, Colors.indigo),
+
+        // Business Class
+        if (seatMap.seatsByClass.containsKey('business'))
+          _buildSeatClassSection('Business Class', seatMap.seatsByClass['business']!, Colors.blue),
+
+        // Woman Only Class
+        if (seatMap.seatsByClass.containsKey('woman_only'))
+          _buildSeatClassSection('Woman Only', seatMap.seatsByClass['woman_only']!, Colors.pink),
+
+        // Economy Class
+        if (seatMap.seatsByClass.containsKey('economy'))
+          _buildSeatClassSection('Economy Class', seatMap.seatsByClass['economy']!, Colors.green),
+      ],
+    );
+  }
+
+  Widget _buildSeatClassSection(String className, ClassSeats seats, Color color) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(8.0),
+          color: color.withOpacity(0.2),
+          child: Text(
+            className,
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: Colors.grey,
+            ),
+          ),
+        ),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            // Available seats
+            ...seats.available.map((seat) => _buildSeatChip(seat, true, color)),
+            // Booked seats
+            ...seats.booked.map((seat) => _buildSeatChip(seat, false, color)),
+          ],
+        ),
+        const SizedBox(height: 16),
+      ],
+    );
+  }
+
+  Widget _buildSeatChip(String seatNumber, bool available, Color color) {
+    return Container(
+      width: 40,
+      height: 40,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: available ? color.withOpacity(0.1) : Colors.grey.shade300,
+        border: Border.all(
+          color: available ? color : Colors.grey,
+          width: 1,
+        ),
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: Text(
+        seatNumber,
+        style: TextStyle(
+          fontWeight: FontWeight.bold,
+          color: Colors.grey.shade700,
+        ),
+      ),
+    );
   }
 
   Future<void> _searchFlights() async {
@@ -253,6 +685,7 @@ class _FlightsScreenState extends State<FlightsScreen> {
     final TextEditingController gateController = TextEditingController(text: isEditing ? flight.gate ?? '' : '');
     final TextEditingController aircraftModelController = TextEditingController(text: isEditing ? flight.aircraftModel : '');
     final TextEditingController registrationNumberController = TextEditingController(text: isEditing ? flight.registrationNumber : '');
+
 
     // Set a default status that exists in the dropdown options if the current status is not valid
     String status = isEditing ? flight.status : 'scheduled';
@@ -615,6 +1048,14 @@ class _FlightsScreenState extends State<FlightsScreen> {
     );
   }
 
+  Color _getSeatAvailabilityColor(int available, int total) {
+    if (total == 0) return Colors.grey;
+
+    final ratio = available / total;
+    if (ratio < 0.2) return AppColors.errorColor;
+    if (ratio < 0.5) return AppColors.warningColor;
+    return AppColors.successColor;
+  }
   Future<void> _cancelFlight(Flight flight) async {
     // Add confirmation dialog
     final bool confirm = await showDialog(
@@ -826,14 +1267,10 @@ class _FlightsScreenState extends State<FlightsScreen> {
                             ),
                             DataColumn2(
                               label: Text('Route'),
-                              size: ColumnSize.L,
-                            ),
-                            DataColumn2(
-                              label: Text('Departure'),
                               size: ColumnSize.M,
                             ),
                             DataColumn2(
-                              label: Text('Arrival'),
+                              label: Text('Date/Time'),
                               size: ColumnSize.M,
                             ),
                             DataColumn2(
@@ -841,12 +1278,28 @@ class _FlightsScreenState extends State<FlightsScreen> {
                               size: ColumnSize.S,
                             ),
                             DataColumn2(
-                              label: Text('Aircraft'),
-                              size: ColumnSize.M,
+                              label: Text('Economy'),
+                              size: ColumnSize.S,
+                              numeric: true,
                             ),
                             DataColumn2(
-                              label: Text('Crew'),
-                              size: ColumnSize.M,
+                              label: Text('Business'),
+                              size: ColumnSize.S,
+                              numeric: true,
+                            ),
+                            DataColumn2(
+                              label: Text('First'),
+                              size: ColumnSize.S,
+                              numeric: true,
+                            ),
+                            DataColumn2(
+                              label: Text('Woman Only'),
+                              size: ColumnSize.S,
+                              numeric: true,
+                            ),
+                            DataColumn2(
+                              label: Text('Seats'),
+                              size: ColumnSize.S,
                             ),
                             DataColumn2(
                               label: Text('Actions'),
@@ -854,12 +1307,20 @@ class _FlightsScreenState extends State<FlightsScreen> {
                             ),
                           ],
                           rows: _flights.map((flight) {
+                            final bool seatsInitialized = flight.seatMap != null && flight.seatMap!.isInitialized;
+
                             return DataRow(
                               cells: [
                                 DataCell(Text(flight.flightNumber)),
                                 DataCell(Text('${flight.origin} → ${flight.destination}')),
-                                DataCell(Text(DateFormat('yyyy-MM-dd HH:mm').format(flight.departureTime))),
-                                DataCell(Text(DateFormat('yyyy-MM-dd HH:mm').format(flight.arrivalTime))),
+                                DataCell(Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Text(DateFormat('yyyy-MM-dd').format(flight.departureTime)),
+                                    Text(DateFormat('HH:mm').format(flight.departureTime)),
+                                  ],
+                                )),
                                 DataCell(
                                   Container(
                                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -876,34 +1337,93 @@ class _FlightsScreenState extends State<FlightsScreen> {
                                     ),
                                   ),
                                 ),
-                                DataCell(Text(flight.aircraftModel)),
-                                DataCell(
-                                  flight.crewName != null
-                                      ? Text(flight.crewName!)
-                                      : TextButton(
-                                    onPressed: () async {
-                                      try {
-                                        EasyLoading.show(status: 'Loading crew info...');
-                                        final response = await _apiService.getFlightCrew(flight.flightId);
-                                        EasyLoading.dismiss();
 
-                                        if (response['success'] && response['data'] != null) {
-                                          _showCrewDialog(response['data']);
-                                        }
-                                      } catch (e) {
-                                        EasyLoading.dismiss();
-                                        ScaffoldMessenger.of(context).showSnackBar(
-                                          SnackBar(
-                                            content: Text('Error getting crew info: ${e.toString()}'),
-                                            backgroundColor: AppColors.errorColor,
-                                          ),
-                                        );
-                                      }
-                                    },
-                                    child: const Text('View Crew'),
+                                // Economy Seats
+                                DataCell(
+                                  seatsInitialized
+                                      ? Text(
+                                    flight.seatMap!.seatsByClass['economy']?.available.length.toString() ?? 'N/A',
+                                    style: TextStyle(
+                                      color: _getSeatAvailabilityColor(
+                                        flight.seatMap!.stats?.economy?.available ?? 0,
+                                        flight.seatMap!.stats?.economy?.total ?? 0,
+                                      ),
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  )
+                                      : const Text('--'),
+                                ),
+
+                                // Business Seats
+                                DataCell(
+                                  seatsInitialized
+                                      ? Text(
+                                    flight.seatMap!.seatsByClass['business']?.available.length.toString() ?? 'N/A',
+                                    style: TextStyle(
+                                      color: _getSeatAvailabilityColor(
+                                        flight.seatMap!.stats?.business?.available ?? 0,
+                                        flight.seatMap!.stats?.business?.total ?? 0,
+                                      ),
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  )
+                                      : const Text('--'),
+                                ),
+
+                                // First Class Seats
+                                DataCell(
+                                  seatsInitialized
+                                      ? Text(
+                                    flight.seatMap!.seatsByClass['first']?.available.length.toString() ?? 'N/A',
+                                    style: TextStyle(
+                                      color: _getSeatAvailabilityColor(
+                                        flight.seatMap!.stats?.first?.available ?? 0,
+                                        flight.seatMap!.stats?.first?.total ?? 0,
+                                      ),
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  )
+                                      : const Text('--'),
+                                ),
+
+                                // Woman Only Seats
+                                DataCell(
+                                  seatsInitialized
+                                      ? Text(
+                                    flight.seatMap!.seatsByClass['woman_only']?.available.length.toString() ?? 'N/A',
+                                    style: TextStyle(
+                                      color: _getSeatAvailabilityColor(
+                                        flight.seatMap!.stats?.womanOnly?.available ?? 0,
+                                        flight.seatMap!.stats?.womanOnly?.total ?? 0,
+                                      ),
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  )
+                                      : const Text('--'),
+                                ),
+
+                                // Seat Initialization/Visualization
+                                DataCell(
+                                  seatsInitialized
+                                      ? ElevatedButton(
+                                    onPressed: () => _viewSeatMap(flight),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: AppColors.infoColor,
+                                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                                    ),
+                                    child: const Text('View'),
+                                  )
+                                      : ElevatedButton(
+                                    onPressed: () => _initializeFlightSeats(flight),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: AppColors.warningColor,
+                                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                                    ),
+                                    child: const Text('Initialize'),
                                   ),
                                 ),
 
+                                // Actions
                                 DataCell(
                                   Row(
                                     children: [
@@ -928,8 +1448,9 @@ class _FlightsScreenState extends State<FlightsScreen> {
                               ],
                             );
                           }).toList(),
-                        ),
+                        )
                       ),
+
 
                       // Pagination
                       if (!_isSearchMode && !_isLoading && _flights.isNotEmpty)
