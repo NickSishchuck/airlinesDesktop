@@ -20,10 +20,25 @@ class SeatMap {
       });
     }
 
+    // Handle prices with type safety
+    Map<String, double>? prices;
+    if (json['prices'] != null) {
+      prices = {};
+      json['prices'].forEach((key, value) {
+        if (value is int) {
+          prices![key] = value.toDouble();
+        } else if (value is double) {
+          prices![key] = value;
+        } else if (value is String) {
+          prices![key] = double.tryParse(value) ?? 0.0;
+        }
+      });
+    }
+
     return SeatMap(
       seatsByClass: seatsByClass,
       stats: json['stats'] != null ? SeatStats.fromJson(json['stats']) : null,
-      prices: json['prices'] != null ? Map<String, double>.from(json['prices']) : null,
+      prices: prices,
     );
   }
 

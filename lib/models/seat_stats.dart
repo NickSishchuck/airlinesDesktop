@@ -13,6 +13,9 @@ class SeatStats {
     this.total,
   });
 
+
+
+
   factory SeatStats.fromJson(Map<String, dynamic> json) {
     return SeatStats(
       economy: json['by_class']?['economy'] != null
@@ -47,10 +50,22 @@ class ClassStats {
 
   factory ClassStats.fromJson(Map<String, dynamic> json) {
     return ClassStats(
-      available: json['available'] ?? 0,
-      booked: json['booked'] ?? 0,
-      total: json['total'] ?? 0,
-      occupancyPercentage: json['occupancy_percentage'] ?? 0,
+      available: json['available'] is String
+          ? int.tryParse(json['available']) ?? 0
+          : json['available'] ?? 0,
+      booked: json['booked'] is String
+          ? int.tryParse(json['booked']) ?? 0
+          : json['booked'] ?? 0,
+      total: json['total'] is String
+          ? int.tryParse(json['total']) ?? 0
+          : json['total'] ?? 0,
+      occupancyPercentage: json['occupancy_percentage'] is int
+          ? json['occupancy_percentage']
+          : json['occupancy_percentage'] is double
+          ? json['occupancy_percentage'].toInt()
+          : json['occupancy_percentage'] is String
+          ? int.tryParse(json['occupancy_percentage']) ?? 0
+          : 0,
     );
   }
 }
@@ -70,10 +85,22 @@ class TotalStats {
 
   factory TotalStats.fromJson(Map<String, dynamic> json) {
     return TotalStats(
-      available: json['available'] ?? 0,
-      booked: json['booked'] ?? 0,
-      total: json['total'] ?? 0,
-      occupancyPercentage: json['occupancy_percentage'] ?? 0,
+      available: json['available'] is String
+          ? int.tryParse(json['available']) ?? 0
+          : json['available'] ?? 0,
+      booked: json['booked'] is String
+          ? int.tryParse(json['booked']) ?? 0
+          : json['booked'] ?? 0,
+      total: json['total'] is String
+          ? int.tryParse(json['total']) ?? 0
+          : json['total'] ?? 0,
+      occupancyPercentage: json['occupancy_percentage'] is int
+          ? json['occupancy_percentage']
+          : json['occupancy_percentage'] is double
+          ? json['occupancy_percentage'].toInt()
+          : json['occupancy_percentage'] is String
+          ? int.tryParse(json['occupancy_percentage']) ?? 0
+          : 0,
     );
   }
 }

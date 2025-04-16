@@ -70,15 +70,44 @@ class Flight {
       crewName: json['crew_name']?.toString(),
 
       // New properties
-      basePrice: json['base_price'] != null ? double.parse(json['base_price'].toString()) : null,
-      firstClassMultiplier: json['first_class_multiplier'] != null ?
-      double.parse(json['first_class_multiplier'].toString()) : 4.0,
-      businessClassMultiplier: json['business_class_multiplier'] != null ?
-      double.parse(json['business_class_multiplier'].toString()) : 2.5,
-      economyClassMultiplier: json['economy_class_multiplier'] != null ?
-      double.parse(json['economy_class_multiplier'].toString()) : 1.0,
-      womanOnlyMultiplier: json['woman_only_multiplier'] != null ?
-      double.parse(json['woman_only_multiplier'].toString()) : 1.2,
+      // In lib/models/flight.dart - update the end of the fromJson method
+
+// Replace the current price and multiplier parsing with this more robust version:
+      basePrice: json['base_price'] != null
+          ? (json['base_price'] is int
+          ? json['base_price'].toDouble()
+          : json['base_price'] is double
+          ? json['base_price']
+          : double.tryParse(json['base_price'].toString()) ?? 0.0)
+          : null,
+      firstClassMultiplier: json['first_class_multiplier'] != null
+          ? (json['first_class_multiplier'] is int
+          ? json['first_class_multiplier'].toDouble()
+          : json['first_class_multiplier'] is double
+          ? json['first_class_multiplier']
+          : double.tryParse(json['first_class_multiplier'].toString()) ?? 4.0)
+          : 4.0,
+      businessClassMultiplier: json['business_class_multiplier'] != null
+          ? (json['business_class_multiplier'] is int
+          ? json['business_class_multiplier'].toDouble()
+          : json['business_class_multiplier'] is double
+          ? json['business_class_multiplier']
+          : double.tryParse(json['business_class_multiplier'].toString()) ?? 2.5)
+          : 2.5,
+      economyClassMultiplier: json['economy_class_multiplier'] != null
+          ? (json['economy_class_multiplier'] is int
+          ? json['economy_class_multiplier'].toDouble()
+          : json['economy_class_multiplier'] is double
+          ? json['economy_class_multiplier']
+          : double.tryParse(json['economy_class_multiplier'].toString()) ?? 1.0)
+          : 1.0,
+      womanOnlyMultiplier: json['woman_only_multiplier'] != null
+          ? (json['woman_only_multiplier'] is int
+          ? json['woman_only_multiplier'].toDouble()
+          : json['woman_only_multiplier'] is double
+          ? json['woman_only_multiplier']
+          : double.tryParse(json['woman_only_multiplier'].toString()) ?? 1.2)
+          : 1.2,
     );
   }
 }
