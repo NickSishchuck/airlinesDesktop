@@ -44,7 +44,7 @@ class _TicketsScreenState extends State<TicketsScreen> {
     super.dispose();
   }
 
-  Future<void> _loadAvailableSeats(int flightId, String seatClass) async {
+  Future<void> _loadAvailableSeats(int flightId, String seatClass, TextEditingController seatNumberController) async {
     try {
       EasyLoading.show(status: 'Loading available seats...');
       final response = await _apiService.getAvailableSeatsByClass(flightId, seatClass);
@@ -92,7 +92,7 @@ class _TicketsScreenState extends State<TicketsScreen> {
                         child: Text(
                           seat,
                           style: TextStyle(
-                            color: Colors.red,
+                            color: Colors.black87,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -112,12 +112,11 @@ class _TicketsScreenState extends State<TicketsScreen> {
         );
 
         // Update seat number if a seat was selected
-        // if (selected != null && mounted) {
-        //   setState(() {
-        //     seatNumberController.text = selected;
-        //   });
-        //}
-        //FIXME
+        if (selected != null && mounted) {
+          setState(() {
+            seatNumberController.text = selected;
+          });
+        }
       } else {
         throw Exception(response['error'] ?? 'Failed to load available seats');
       }
@@ -596,6 +595,7 @@ class _TicketsScreenState extends State<TicketsScreen> {
                     ),
                     SizedBox(height: 12),
 
+
                     // Seat Number - Always editable
                     TextField(
                       controller: seatNumberController,
@@ -623,12 +623,15 @@ class _TicketsScreenState extends State<TicketsScreen> {
                                 : int.tryParse(flightIdController.text);
 
                             if (flightId != null) {
-                              _loadAvailableSeats(flightId, ticketClass);
+                              // Pass the seatNumberController to the method
+                              _loadAvailableSeats(flightId, ticketClass, seatNumberController);
                             }
                           },
                         ),
                       ),
                     ),
+
+                    SizedBox(height: 16),
 
                     // Ticket Class - Always editable
                     DropdownButtonFormField<String>(
