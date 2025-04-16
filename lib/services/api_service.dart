@@ -378,4 +378,48 @@ class ApiService {
   Future<Map<String, dynamic>> getTicketsByPassportNumber(String passportNumber) async {
     return await get('/tickets/passport/$passportNumber');
   }
+
+  // lib/services/api_service.dart
+
+// Add these methods to your ApiService class
+
+// Flight Seats API
+  Future<Map<String, dynamic>> getFlightSeatMap(int flightId) async {
+    return await get('/flight-seats/$flightId/seat-map');
+  }
+
+  Future<Map<String, dynamic>> getAvailableSeatsByClass(int flightId, String seatClass) async {
+    return await get('/flight-seats/$flightId/available/$seatClass');
+  }
+
+  Future<Map<String, dynamic>> checkSeatAvailability(
+      int flightId, String seatClass, String seatNumber) async {
+    return await get('/flight-seats/$flightId/check/$seatClass/$seatNumber');
+  }
+
+  Future<Map<String, dynamic>> validateSeat(int flightId, Map<String, dynamic> seatData) async {
+    return await post('/flight-seats/$flightId/validate', seatData);
+  }
+
+  Future<Map<String, dynamic>> initializeFlightSeats(int flightId) async {
+    return await post('/flight-seats/$flightId/initialize', {});
+  }
+
+  Future<Map<String, dynamic>> reconfigureFlightSeats(
+      int flightId, Map<String, dynamic> configuration) async {
+    return await put('/flight-seats/$flightId/reconfigure', {'configuration': configuration});
+  }
+
+// Enhanced Ticket API methods
+  Future<Map<String, dynamic>> validateSeatForBooking(Map<String, dynamic> seatData) async {
+    return await post('/tickets/validate-seat', seatData);
+  }
+
+  Future<Map<String, dynamic>> getAvailableSeats(int flightId, {String? seatClass}) async {
+    if (seatClass != null) {
+      return await get('/tickets/flight/$flightId/available-seats/$seatClass');
+    } else {
+      return await get('/tickets/flight/$flightId/available-seats');
+    }
+  }
 }

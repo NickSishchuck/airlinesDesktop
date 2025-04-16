@@ -109,6 +109,30 @@ class Validators {
       return '$fieldName must be a number';
     }
 
+
     return null;
+  }
+}
+// Add class colors
+class SeatClassColors {
+  static final Color economy = Colors.green;
+  static final Color business = Colors.blue;
+  static final Color first = Colors.indigo;
+  static final Color womanOnly = Colors.pink;
+}
+
+// Add a helper function for formatting ticket classes
+String formatTicketClass(String ticketClass) {
+  switch (ticketClass) {
+    case 'economy':
+      return 'Economy';
+    case 'business':
+      return 'Business';
+    case 'first':
+      return 'First Class';
+    case 'woman_only':
+      return 'Woman Only';
+    default:
+      return ticketClass;
   }
 }

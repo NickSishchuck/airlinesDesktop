@@ -1,10 +1,11 @@
-// models/user.dart
+// lib/models/user.dart
 class User {
   final int userId;
   final String firstName;
   final String lastName;
   final String email;
   final String role;
+  final String? gender;  // Add gender field
 
   User({
     required this.userId,
@@ -12,8 +13,8 @@ class User {
     required this.lastName,
     required this.email,
     required this.role,
+    this.gender,  // Add to constructor
   });
-
 
   factory User.fromJson(Map<String, dynamic> json) {
     return User(
@@ -22,6 +23,7 @@ class User {
       lastName: json['last_name'],
       email: json['email'],
       role: json['role'],
+      gender: json['gender'],  // Parse from JSON
     );
   }
 }

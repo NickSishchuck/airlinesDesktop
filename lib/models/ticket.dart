@@ -1,3 +1,4 @@
+// lib/models/ticket.dart
 class Ticket {
   final int ticketId;
   final String seatNumber;
@@ -12,6 +13,7 @@ class Ticket {
   final String? destination;
   final String? passengerName;
   final String? passportNumber;
+  final String? gender;  // Add gender field
   final int? passengerId;
   final int? flightId;
 
@@ -29,6 +31,7 @@ class Ticket {
     this.destination,
     this.passengerName,
     this.passportNumber,
+    this.gender,  // Add to constructor
     this.passengerId,
     this.flightId,
   });
@@ -54,6 +57,7 @@ class Ticket {
       destination: json['destination'],
       passengerName: json['passenger_name'],
       passportNumber: json['passport_number'],
+      gender: json['gender'],  // Parse from JSON
       passengerId: json['user_id'],
       flightId: json['flight_id'],
     );
