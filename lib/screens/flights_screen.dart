@@ -1317,7 +1317,7 @@ class _FlightsScreenState extends State<FlightsScreen> {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                    Text(DateFormat('yyyy-MM-dd').format(flight.departureTime)),
+                                    Text(DateFormat('dd-MM-yyy').format(flight.departureTime)),
                                     Text(DateFormat('HH:mm').format(flight.departureTime)),
                                   ],
                                 )),

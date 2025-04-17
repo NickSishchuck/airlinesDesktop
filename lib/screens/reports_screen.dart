@@ -367,19 +367,50 @@ class _ReportsScreenState extends State<ReportsScreen> {
                                     numeric: true,
                                   ),
                                 ],
-                                rows: _salesReports.map((report) {
-                                  return DataRow(
+                                rows: [
+                                  // Existing report rows
+                                  ..._salesReports.map((report) {
+                                    return DataRow(
+                                      cells: [
+                                        DataCell(Text(report.flightNumber)),
+                                        DataCell(Text('${report.origin} → ${report.destination}')),
+                                        DataCell(Text(DateFormat('MMM d, yyyy').format(report.flightDate))),
+                                        DataCell(Text(report.ticketClass.toUpperCase())),
+                                        DataCell(Text(report.ticketsSold.toString())),
+                                        DataCell(Text('\$${report.totalRevenue.toStringAsFixed(2)}')),
+                                        DataCell(Text('${report.occupancyPercentage.toStringAsFixed(2)}%')),
+                                      ],
+                                    );
+                                  }).toList(),
+
+                                  // Add a divider row
+                                  DataRow(
+                                    cells: List.generate(7, (index) => DataCell(Divider(color: Colors.grey.shade300, thickness: 2))),
+                                  ),
+
+                                  // Add the summary row
+                                  DataRow(
+                                    color: MaterialStateProperty.all(Colors.grey.shade200),
                                     cells: [
-                                      DataCell(Text(report.flightNumber)),
-                                      DataCell(Text('${report.origin} → ${report.destination}')),
-                                      DataCell(Text(DateFormat('MMM d, yyyy').format(report.flightDate))),
-                                      DataCell(Text(report.ticketClass.toUpperCase())),
-                                      DataCell(Text(report.ticketsSold.toString())),
-                                      DataCell(Text('\$${report.totalRevenue.toStringAsFixed(2)}')),
-                                      DataCell(Text('${report.occupancyPercentage.toStringAsFixed(2)}%')),
+                                      DataCell(Text('TOTAL', style: TextStyle(fontWeight: FontWeight.bold))),
+                                      DataCell(Text('')),  // Empty cell for Route
+                                      DataCell(Text('')),  // Empty cell for Date
+                                      DataCell(Text('')),  // Empty cell for Class
+                                      DataCell(Text(
+                                        _totalTicketsSold.toString(),
+                                        style: TextStyle(fontWeight: FontWeight.bold),
+                                      )),
+                                      DataCell(Text(
+                                        '\$${_totalRevenue.toStringAsFixed(2)}',
+                                        style: TextStyle(fontWeight: FontWeight.bold),
+                                      )),
+                                      DataCell(Text(
+                                        '${_averageOccupancy.toStringAsFixed(2)}%',
+                                        style: TextStyle(fontWeight: FontWeight.bold),
+                                      )),
                                     ],
-                                  );
-                                }).toList(),
+                                  ),
+                                ],
                               ),
                             ),
                           ],
