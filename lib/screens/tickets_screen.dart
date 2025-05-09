@@ -479,6 +479,17 @@ class _TicketsScreenState extends State<TicketsScreen> {
       builder: (BuildContext context) {
         return StatefulBuilder(
           builder: (context, setState) {
+            void searchFlightInDialog() async {
+              await _searchFlightByNumber(flightNumberController.text);
+              // This will update the dialog UI
+              setState(() {});
+            }
+
+            void searchPassengerInDialog() async {
+              await _searchPassengerByPassport(passportNumberController.text);
+              // This will update the dialog UI
+              setState(() {});
+            }
             return AlertDialog(
               title: Text(isEditing ? 'Edit Ticket' : 'Book New Ticket'),
               content: SingleChildScrollView(
@@ -680,14 +691,39 @@ class _TicketsScreenState extends State<TicketsScreen> {
                           prefixIcon: Icon(Icons.flight),
                           suffixIcon: IconButton(
                             icon: Icon(Icons.search),
-                            onPressed: () => _searchFlightByNumber(flightNumberController.text),
+                            onPressed: searchFlightInDialog,
                             tooltip: 'Search for flight',
                           ),
                         ),
                       ),
-                      SizedBox(height: 16),
+                      SizedBox(height: 8),
 
-                      // Passport number field instead of passenger ID
+                      // Found flight info container (initially hidden)
+                      if (_foundFlight != null) ...[
+                        Container(
+                          padding: EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: Colors.blue.shade50,
+                            borderRadius: BorderRadius.circular(4),
+                            border: Border.all(color: Colors.blue.shade200),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(Icons.check_circle, color: Colors.blue),
+                              SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  'Flight found: ${_foundFlight!['flight_number']} - ${_foundFlight!['origin']} to ${_foundFlight!['destination']}',
+                                  style: TextStyle(fontWeight: FontWeight.bold),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        SizedBox(height: 16),
+                      ],
+
+                      // Update passenger search button
                       TextField(
                         controller: passportNumberController,
                         decoration: InputDecoration(
@@ -697,7 +733,7 @@ class _TicketsScreenState extends State<TicketsScreen> {
                           prefixIcon: Icon(Icons.book),
                           suffixIcon: IconButton(
                             icon: Icon(Icons.search),
-                            onPressed: () => _searchPassengerByPassport(passportNumberController.text),
+                            onPressed: searchPassengerInDialog, // Use the local function
                             tooltip: 'Search for passenger',
                           ),
                         ),
@@ -766,31 +802,31 @@ class _TicketsScreenState extends State<TicketsScreen> {
                         labelText: 'Seat Number',
                         border: OutlineInputBorder(),
                         prefixIcon: const Icon(Icons.airline_seat_recline_normal),
-                        suffixIcon: IconButton(
-                          icon: const Icon(Icons.list),
-                          tooltip: 'Select from available seats',
-                          onPressed: () {
-                            // Make sure we have a flight ID first
-                            if (flightIdController.text.isEmpty && !isEditing) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('Please select a flight first'),
-                                  backgroundColor: AppColors.warningColor,
-                                ),
-                              );
-                              return;
-                            }
+                          suffixIcon: IconButton(
+                            icon: const Icon(Icons.list),
+                            tooltip: 'Select from available seats',
+                            onPressed: () {
+                              // Make sure we have a flight ID first
+                              if (_selectedFlightId == null && !isEditing) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Please select a flight first'),
+                                    backgroundColor: AppColors.warningColor,
+                                  ),
+                                );
+                                return;
+                              }
 
-                            final flightId = isEditing
-                                ? ticket!.flightId!
-                                : int.tryParse(flightIdController.text);
+                              final flightId = isEditing
+                                  ? ticket!.flightId!
+                                  : _selectedFlightId;
 
-                            if (flightId != null) {
-                              // Pass the seatNumberController to the method
-                              _loadAvailableSeats(flightId, ticketClass, seatNumberController);
-                            }
-                          },
-                        ),
+                              if (flightId != null) {
+                                // Pass the seatNumberController to the method
+                                _loadAvailableSeats(flightId, ticketClass, seatNumberController);
+                              }
+                            },
+                          )
                       ),
                     ),
 
@@ -883,6 +919,18 @@ class _TicketsScreenState extends State<TicketsScreen> {
               actions: [
                 TextButton(
                   onPressed: () {
+                    // Clear selections and text fields
+                    setState(() {
+                      _foundFlight = null;
+                      _selectedFlightId = null;
+                      _foundPassenger = null;
+                      _selectedPassengerId = null;
+
+                      // Clear text controllers
+                      flightNumberController.clear();
+                      passportNumberController.clear();
+                    });
+
                     Navigator.of(context).pop();
                   },
                   child: const Text('Cancel'),
@@ -891,12 +939,31 @@ class _TicketsScreenState extends State<TicketsScreen> {
                   onPressed: () async {
                     // Validate inputs
                     if (seatNumberController.text.isEmpty ||
-                        priceController.text.isEmpty ||
-                        (flightIdController.text.isEmpty && !isEditing) ||
-                        (passengerIdController.text.isEmpty && !isEditing)) {
+                        priceController.text.isEmpty) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
                           content: Text('Please fill all required fields'),
+                          backgroundColor: AppColors.warningColor,
+                        ),
+                      );
+                      return;
+                    }
+
+// Validate that we have flight and passenger IDs
+                    if (_selectedFlightId == null && !isEditing) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Please search for a valid flight first'),
+                          backgroundColor: AppColors.warningColor,
+                        ),
+                      );
+                      return;
+                    }
+
+                    if (_selectedPassengerId == null && !isEditing) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Please search for a valid passenger or create a new one'),
                           backgroundColor: AppColors.warningColor,
                         ),
                       );
@@ -943,7 +1010,7 @@ class _TicketsScreenState extends State<TicketsScreen> {
                         'price': price,
                         'payment_status': paymentStatus,
                       } : {
-                        'passenger_id': _selectedPassengerId,
+                        'user_id': _selectedPassengerId,
                         'flight_id': _selectedFlightId,
                         'seat_number': seatNumberController.text,
                         'class': ticketClass,
@@ -962,6 +1029,17 @@ class _TicketsScreenState extends State<TicketsScreen> {
 
                       EasyLoading.dismiss();
                       _loadTickets();
+                      // Clear selections and text fields
+                      setState(() {
+                        _foundFlight = null;
+                        _selectedFlightId = null;
+                        _foundPassenger = null;
+                        _selectedPassengerId = null;
+
+                        // Clear text controllers
+                        _searchFlightNumberController.clear();
+                        _searchPassportNumberController.clear();
+                      });
 
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
@@ -1030,7 +1108,9 @@ class _TicketsScreenState extends State<TicketsScreen> {
                           fontSize: 16,
                         ),
                       ),
+
                       SizedBox(height: 12),
+
 
                       // First and Last Name (in a row)
                       Row(
