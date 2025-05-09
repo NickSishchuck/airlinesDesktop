@@ -21,6 +21,10 @@ class _TicketsScreenState extends State<TicketsScreen> {
   int _page = 1;
   int _limit = 10;
   int _totalPages = 1;
+  Map<String, dynamic>? _foundPassenger;
+  Map<String, dynamic>? _foundFlight;
+  int? _selectedPassengerId;
+  int? _selectedFlightId;
 
   // Search parameters
   final TextEditingController _searchFlightController = TextEditingController();
@@ -342,6 +346,113 @@ class _TicketsScreenState extends State<TicketsScreen> {
     _loadTickets();
   }
 
+
+  Future<void> _searchFlightByNumber(String flightNumber) async {
+    if (flightNumber.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please enter a flight number'),
+          backgroundColor: AppColors.warningColor,
+        ),
+      );
+      return;
+    }
+
+    try {
+      EasyLoading.show(status: 'Searching for flight...');
+      final response = await _apiService.getFlightByNumber(flightNumber);
+      EasyLoading.dismiss();
+
+      if (response['success'] && response['data'] != null) {
+        setState(() {
+          _foundFlight = response['data'];
+          _selectedFlightId = _foundFlight!['flight_id'];
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Flight found: ${_foundFlight!['flight_number']} - ${_foundFlight!['origin']} to ${_foundFlight!['destination']}'),
+            backgroundColor: AppColors.successColor,
+            duration: Duration(seconds: 2),
+          ),
+        );
+      } else {
+        setState(() {
+          _foundFlight = null;
+          _selectedFlightId = null;
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('No flight found with number: $flightNumber'),
+            backgroundColor: AppColors.warningColor,
+          ),
+        );
+      }
+    } catch (e) {
+      EasyLoading.dismiss();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error searching for flight: ${e.toString()}'),
+          backgroundColor: AppColors.errorColor,
+        ),
+      );
+    }
+  }
+
+  Future<void> _searchPassengerByPassport(String passportNumber) async {
+    if (passportNumber.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please enter a passport number'),
+          backgroundColor: AppColors.warningColor,
+        ),
+      );
+      return;
+    }
+
+    try {
+      EasyLoading.show(status: 'Searching for passenger...');
+      final response = await _apiService.getPassengerByPassport(passportNumber);
+      EasyLoading.dismiss();
+
+      if (response['success'] && response['data'] != null) {
+        setState(() {
+          _foundPassenger = response['data'];
+          _selectedPassengerId = _foundPassenger!['user_id'];
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Passenger found: ${_foundPassenger!['first_name']} ${_foundPassenger!['last_name']}'),
+            backgroundColor: AppColors.successColor,
+            duration: Duration(seconds: 2),
+          ),
+        );
+      } else {
+        setState(() {
+          _foundPassenger = null;
+          _selectedPassengerId = null;
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('No passenger found with passport number: $passportNumber'),
+            backgroundColor: AppColors.warningColor,
+          ),
+        );
+      }
+    } catch (e) {
+      EasyLoading.dismiss();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error searching for passenger: ${e.toString()}'),
+          backgroundColor: AppColors.errorColor,
+        ),
+      );
+    }
+  }
+
   Future<void> _showTicketDialog({Ticket? ticket}) async {
     final bool isEditing = ticket != null;
 
@@ -559,25 +670,77 @@ class _TicketsScreenState extends State<TicketsScreen> {
                       ),
                       SizedBox(height: 12),
 
+                      // Flight number instead of flight ID
                       TextField(
-                        controller: flightIdController,
-                        decoration: const InputDecoration(
-                          labelText: 'Flight ID',
+                        controller: flightNumberController,
+                        decoration: InputDecoration(
+                          labelText: 'Flight Number',
                           border: OutlineInputBorder(),
-                          helperText: 'Enter the ID of an existing flight',
+                          helperText: 'Enter the flight number (e.g., PS101)',
+                          prefixIcon: Icon(Icons.flight),
+                          suffixIcon: IconButton(
+                            icon: Icon(Icons.search),
+                            onPressed: () => _searchFlightByNumber(flightNumberController.text),
+                            tooltip: 'Search for flight',
+                          ),
                         ),
-                        keyboardType: TextInputType.number,
                       ),
-                      SizedBox(height: 12),
+                      SizedBox(height: 16),
 
+                      // Passport number field instead of passenger ID
                       TextField(
-                        controller: passengerIdController,
-                        decoration: const InputDecoration(
-                          labelText: 'Passenger ID',
+                        controller: passportNumberController,
+                        decoration: InputDecoration(
+                          labelText: 'Passport Number',
                           border: OutlineInputBorder(),
-                          helperText: 'Enter the ID of an existing passenger',
+                          helperText: 'Enter passport number of existing passenger',
+                          prefixIcon: Icon(Icons.book),
+                          suffixIcon: IconButton(
+                            icon: Icon(Icons.search),
+                            onPressed: () => _searchPassengerByPassport(passportNumberController.text),
+                            tooltip: 'Search for passenger',
+                          ),
                         ),
-                        keyboardType: TextInputType.number,
+                      ),
+                      SizedBox(height: 8),
+
+                      // Found passenger info container (initially hidden)
+                      if (_foundPassenger != null) ...[
+                        Container(
+                          padding: EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: Colors.green.shade50,
+                            borderRadius: BorderRadius.circular(4),
+                            border: Border.all(color: Colors.green.shade200),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(Icons.check_circle, color: Colors.green),
+                              SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  'Found: ${_foundPassenger!['first_name']} ${_foundPassenger!['last_name']}',
+                                  style: TextStyle(fontWeight: FontWeight.bold),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        SizedBox(height: 8),
+                      ],
+
+                      // New Passenger button
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton.icon(
+                          onPressed: () => _showCreateUserDialog(passportNumberController),
+                          icon: Icon(Icons.person_add),
+                          label: Text('Create New Passenger'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.accentColor,
+                            padding: EdgeInsets.symmetric(vertical: 12),
+                          ),
+                        ),
                       ),
                     ],
 
@@ -752,6 +915,27 @@ class _TicketsScreenState extends State<TicketsScreen> {
                     }
 
                     try {
+                      // Validate that we have flight and passenger IDs
+                      if (_selectedFlightId == null) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Please search for a valid flight first'),
+                            backgroundColor: AppColors.warningColor,
+                          ),
+                        );
+                        return;
+                      }
+
+                      if (_selectedPassengerId == null) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Please search for a valid passenger or create a new one'),
+                            backgroundColor: AppColors.warningColor,
+                          ),
+                        );
+                        return;
+                      }
+
                       // Create ticket data - for editing, we only update the editable fields
                       final ticketData = isEditing ? {
                         'seat_number': seatNumberController.text,
@@ -759,8 +943,8 @@ class _TicketsScreenState extends State<TicketsScreen> {
                         'price': price,
                         'payment_status': paymentStatus,
                       } : {
-                        'passenger_id': int.parse(passengerIdController.text),
-                        'flight_id': int.parse(flightIdController.text),
+                        'passenger_id': _selectedPassengerId,
+                        'flight_id': _selectedFlightId,
                         'seat_number': seatNumberController.text,
                         'class': ticketClass,
                         'price': price,
@@ -796,6 +980,302 @@ class _TicketsScreenState extends State<TicketsScreen> {
                     }
                   },
                   child: Text(isEditing ? 'Update' : 'Book'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+
+  Future<void> _showCreateUserDialog(TextEditingController passportNumberController) async {
+    final TextEditingController firstNameController = TextEditingController();
+    final TextEditingController lastNameController = TextEditingController();
+    final TextEditingController emailController = TextEditingController();
+    final TextEditingController passwordController = TextEditingController();
+    // If a passport number was provided, use it
+    final TextEditingController passportController = TextEditingController(text: passportNumberController.text);
+    final TextEditingController contactNumberController = TextEditingController();
+    final TextEditingController dateOfBirthController = TextEditingController();
+    final TextEditingController addressController = TextEditingController();
+    DateTime? selectedDate;
+    String gender = 'male';
+
+    await showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: Row(
+                children: [
+                  Icon(Icons.person_add, color: AppColors.accentColor),
+                  SizedBox(width: 8),
+                  Text('Create New Passenger'),
+                ],
+              ),
+              content: SingleChildScrollView(
+                child: Container(
+                  width: 500, // Set a fixed width for the dialog
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Basic Information',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
+                      SizedBox(height: 12),
+
+                      // First and Last Name (in a row)
+                      Row(
+                        children: [
+                          Expanded(
+                            child: TextField(
+                              controller: firstNameController,
+                              decoration: InputDecoration(
+                                labelText: 'First Name *',
+                                border: OutlineInputBorder(),
+                                prefixIcon: Icon(Icons.person),
+                              ),
+                            ),
+                          ),
+                          SizedBox(width: 16),
+                          Expanded(
+                            child: TextField(
+                              controller: lastNameController,
+                              decoration: InputDecoration(
+                                labelText: 'Last Name *',
+                                border: OutlineInputBorder(),
+                                prefixIcon: Icon(Icons.person),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: 16),
+
+                      // Email and Password
+                      TextField(
+                        controller: emailController,
+                        decoration: InputDecoration(
+                          labelText: 'Email *',
+                          border: OutlineInputBorder(),
+                          prefixIcon: Icon(Icons.email),
+                          helperText: 'Will be used for login and notifications',
+                        ),
+                        keyboardType: TextInputType.emailAddress,
+                      ),
+                      SizedBox(height: 16),
+
+                      TextField(
+                        controller: passwordController,
+                        decoration: InputDecoration(
+                          labelText: 'Password *',
+                          border: OutlineInputBorder(),
+                          prefixIcon: Icon(Icons.lock),
+                          helperText: 'Create a temporary password for the passenger',
+                        ),
+                        obscureText: true,
+                      ),
+                      SizedBox(height: 16),
+
+                      // Passport Number
+                      TextField(
+                        controller: passportController,
+                        decoration: InputDecoration(
+                          labelText: 'Passport Number *',
+                          border: OutlineInputBorder(),
+                          prefixIcon: Icon(Icons.book),
+                          helperText: 'Required for international flights',
+                        ),
+                      ),
+                      SizedBox(height: 16),
+
+                      // Date of Birth
+                      TextField(
+                        controller: dateOfBirthController,
+                        decoration: InputDecoration(
+                          labelText: 'Date of Birth *',
+                          border: OutlineInputBorder(),
+                          prefixIcon: Icon(Icons.calendar_today),
+                        ),
+                        readOnly: true,
+                        onTap: () async {
+                          final DateTime? picked = await showDatePicker(
+                            context: context,
+                            initialDate: selectedDate ?? DateTime.now().subtract(Duration(days: 365 * 25)),
+                            firstDate: DateTime(1900),
+                            lastDate: DateTime.now(),
+                          );
+
+                          if (picked != null && picked != selectedDate) {
+                            setState(() {
+                              selectedDate = picked;
+                              dateOfBirthController.text = DateFormat('yyyy-MM-dd').format(picked);
+                            });
+                          }
+                        },
+                      ),
+                      SizedBox(height: 16),
+
+                      // Contact Number
+                      TextField(
+                        controller: contactNumberController,
+                        decoration: InputDecoration(
+                          labelText: 'Contact Number *',
+                          border: OutlineInputBorder(),
+                          prefixIcon: Icon(Icons.phone),
+                          helperText: 'For flight notifications and updates',
+                        ),
+                        keyboardType: TextInputType.phone,
+                      ),
+                      SizedBox(height: 16),
+
+                      // Address (optional)
+                      TextField(
+                        controller: addressController,
+                        decoration: InputDecoration(
+                          labelText: 'Address',
+                          border: OutlineInputBorder(),
+                          prefixIcon: Icon(Icons.home),
+                          helperText: 'Optional',
+                        ),
+                        maxLines: 2,
+                      ),
+                      SizedBox(height: 16),
+
+                      // Gender Selection
+                      Text(
+                        'Gender: *',
+                        style: TextStyle(
+                          fontSize: 16,
+                        ),
+                      ),
+                      Row(
+                        children: [
+                          Radio<String>(
+                            value: 'male',
+                            groupValue: gender,
+                            onChanged: (value) {
+                              setState(() {
+                                gender = value!;
+                              });
+                            },
+                          ),
+                          Text('Male'),
+                          SizedBox(width: 16),
+                          Radio<String>(
+                            value: 'female',
+                            groupValue: gender,
+                            onChanged: (value) {
+                              setState(() {
+                                gender = value!;
+                              });
+                            },
+                          ),
+                          Text('Female'),
+                        ],
+                      ),
+                      SizedBox(height: 8),
+                      Text(
+                        '* Required fields',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontStyle: FontStyle.italic,
+                          color: Colors.grey,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                  child: Text('Cancel'),
+                ),
+                ElevatedButton(
+                  onPressed: () async {
+                    // Validate inputs
+                    if (firstNameController.text.isEmpty ||
+                        lastNameController.text.isEmpty ||
+                        emailController.text.isEmpty ||
+                        passwordController.text.isEmpty ||
+                        passportController.text.isEmpty ||
+                        dateOfBirthController.text.isEmpty ||
+                        contactNumberController.text.isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Please fill all required fields'),
+                          backgroundColor: AppColors.warningColor,
+                        ),
+                      );
+                      return;
+                    }
+
+                    try {
+                      // Prepare passenger data
+                      final passengerData = {
+                        'first_name': firstNameController.text,
+                        'last_name': lastNameController.text,
+                        'email': emailController.text,
+                        'password': passwordController.text,
+                        'passport_number': passportController.text,
+                        'date_of_birth': dateOfBirthController.text,
+                        'contact_number': contactNumberController.text,
+                        'gender': gender,
+                        'address': addressController.text,
+                        'role': 'passenger', // Default role for passengers
+                      };
+
+                      Navigator.of(context).pop();
+                      EasyLoading.show(status: 'Creating new passenger...');
+
+                      final response = await _apiService.createPassenger(passengerData);
+
+                      EasyLoading.dismiss();
+
+                      if (response['success']) {
+                        // Get the new passenger ID and store it for ticket creation
+                        final newPassengerId = response['data']['user_id']; // Assuming your API returns user_id
+                        setState(() {
+                          _foundPassenger = response['data'];
+                          _selectedPassengerId = newPassengerId;
+                        });
+
+                        // Also update the passport number field in the parent dialog if it was empty
+                        if (passportNumberController.text.isEmpty) {
+                          passportNumberController.text = passportController.text;
+                        }
+
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Passenger created successfully'),
+                            backgroundColor: AppColors.successColor,
+                          ),
+                        );
+                      } else {
+                        throw Exception(response['error'] ?? 'Failed to create passenger');
+                      }
+                    } catch (e) {
+                      EasyLoading.dismiss();
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Error creating passenger: ${e.toString()}'),
+                          backgroundColor: AppColors.errorColor,
+                        ),
+                      );
+                    }
+                  },
+                  child: Text('Create'),
                 ),
               ],
             );

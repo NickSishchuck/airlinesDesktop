@@ -422,4 +422,26 @@ class ApiService {
       return await get('/tickets/flight/$flightId/available-seats');
     }
   }
+  // Passengers API (Users)
+  Future<Map<String, dynamic>> createPassenger(Map<String, dynamic> passengerData) async {
+    return await post('/passengers', passengerData);
+  }
+
+  Future<Map<String, dynamic>> getPassengerById(int id) async {
+    return await get('/passengers/$id');
+  }
+
+  Future<Map<String, dynamic>> getPassengerTickets(int passengerId) async {
+    return await get('/passengers/$passengerId/tickets');
+  }
+
+
+  Future<Map<String, dynamic>> getPassengerByPassport(String passportNumber) async {
+    return await get('/passengers/passport/$passportNumber');
+  }
+
+// Flights API
+  Future<Map<String, dynamic>> getFlightByNumber(String flightNumber) async {
+    return await get('/flights/flight-number/$flightNumber');
+  }
 }
