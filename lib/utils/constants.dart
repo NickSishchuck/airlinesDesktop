@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 
-
-
 class AppColors {
   static const Color primaryColor = Color(0xFF1976D2);
   static const Color secondaryColor = Color(0xFF03A9F4);
@@ -10,22 +8,6 @@ class AppColors {
   static const Color errorColor = Color(0xFFF44336);
   static const Color successColor = Color(0xFF4CAF50);
   static const Color infoColor = Color(0xFF2196F3);
-
-  static const Color primaryColorDark = Color(0xFF1565C0);
-  static const Color secondaryColorDark = Color(0xFF0288D1);
-  static const Color accentColorDark = Color(0xFF388E3C);
-  static const Color warningColorDark = Color(0xFFFFB300);
-  static const Color errorColorDark = Color(0xFFD32F2F);
-  static const Color successColorDark = Color(0xFF388E3C);
-  static const Color infoColorDark = Color(0xFF1976D2);
-
-  static const Color backgroundLight = Colors.white;
-  static const Color backgroundDark = Color(0xFF121212);
-  static const Color cardColorLight = Colors.white;
-  static const Color cardColorDark = Color(0xFF1E1E1E);
-  static const Color textColorLight = Colors.black87;
-  static const Color textColorDark = Colors.white;
-
 
   static const Color scheduledColor = Color(0xFF4CAF50);
   static const Color delayedColor = Color(0xFFFFC107);
