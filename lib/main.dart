@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 
 import 'providers/auth_provider.dart';
 import 'screens/login_screen.dart';
+import 'providers/theme_provider.dart';
 import 'screens/dashboard_screen.dart';
 import 'screens/flights_screen.dart';
 import 'screens/tickets_screen.dart';
@@ -12,6 +13,7 @@ import 'screens/reports_screen.dart';
 import 'screens/crew_management_screen.dart';
 import 'screens/crew_member_management_screen.dart';
 import 'utils/constants.dart';
+import 'utils/theme_data.dart';
 
 
 void main() {
@@ -20,6 +22,7 @@ void main() {
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => AuthProvider()),
+        ChangeNotifierProvider(create: (_) => ThemeProvider()),
       ],
       child: const MyApp(),
     ),
@@ -31,6 +34,9 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+
+    final themeProvider = Provider.of<ThemeProvider>(context);
+
     return MaterialApp(
       title: 'Airline Admin Panel',
       debugShowCheckedModeBanner: false,
@@ -202,12 +208,12 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
       ),
       body: _widgetOptions.elementAt(_selectedIndex),
       drawer: Drawer(
-        child: ListView(
-          padding: EdgeInsets.zero,
+        child: Column(  // Replace ListView with Column to have better control over bottom placement
           children: [
+            // Drawer Header
             DrawerHeader(
-              decoration: const BoxDecoration(
-                color: AppColors.primaryColor,
+              decoration: BoxDecoration(
+                color: Theme.of(context).primaryColor,  // Use theme-aware color
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -230,70 +236,98 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
                 ],
               ),
             ),
-            ListTile(
-              leading: const Icon(Icons.dashboard),
-              title: const Text('Dashboard'),
-              selected: _selectedIndex == 0,
-              onTap: () {
-                _onItemTapped(0);
-                Navigator.pop(context);
-              },
+
+            // Main menu items - wrap in Expanded to push bottom items down
+            Expanded(
+              child: ListView(
+                padding: EdgeInsets.zero,
+                children: [
+                  ListTile(
+                    leading: const Icon(Icons.dashboard),
+                    title: const Text('Dashboard'),
+                    selected: _selectedIndex == 0,
+                    onTap: () {
+                      _onItemTapped(0);
+                      Navigator.pop(context);
+                    },
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.flight),
+                    title: const Text('Flights Management'),
+                    selected: _selectedIndex == 1,
+                    onTap: () {
+                      _onItemTapped(1);
+                      Navigator.pop(context);
+                    },
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.confirmation_number),
+                    title: const Text('Tickets Management'),
+                    selected: _selectedIndex == 2,
+                    onTap: () {
+                      _onItemTapped(2);
+                      Navigator.pop(context);
+                    },
+                  ),
+                  ExpansionTile(
+                    leading: const Icon(Icons.people),
+                    title: const Text('Crew Management'),
+                    initiallyExpanded: _selectedIndex == 3 || _selectedIndex == 4,
+                    children: [
+                      ListTile(
+                        leading: const Icon(Icons.groups),
+                        title: const Text('Crews'),
+                        selected: _selectedIndex == 3,
+                        onTap: () {
+                          _onItemTapped(3);
+                          Navigator.pop(context);
+                        },
+                        contentPadding: const EdgeInsets.only(left: 32.0),
+                      ),
+                      ListTile(
+                        leading: const Icon(Icons.person),
+                        title: const Text('Crew Members'),
+                        selected: _selectedIndex == 4,
+                        onTap: () {
+                          _onItemTapped(4);
+                          Navigator.pop(context);
+                        },
+                        contentPadding: const EdgeInsets.only(left: 32.0),
+                      ),
+                    ],
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.analytics),
+                    title: const Text('Reports & Analytics'),
+                    selected: _selectedIndex == 5,
+                    onTap: () {
+                      _onItemTapped(5);
+                      Navigator.pop(context);
+                    },
+                  ),
+                ],
+              ),
             ),
-            ListTile(
-              leading: const Icon(Icons.flight),
-              title: const Text('Flights Management'),
-              selected: _selectedIndex == 1,
-              onTap: () {
-                _onItemTapped(1);
-                Navigator.pop(context);
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.confirmation_number),
-              title: const Text('Tickets Management'),
-              selected: _selectedIndex == 2,
-              onTap: () {
-                _onItemTapped(2);
-                Navigator.pop(context);
-              },
-            ),
-            ExpansionTile(
-              leading: const Icon(Icons.people),
-              title: const Text('Crew Management'),
-              initiallyExpanded: _selectedIndex == 3 || _selectedIndex == 4,
-              children: [
-                ListTile(
-                  leading: const Icon(Icons.groups),
-                  title: const Text('Crews'),
-                  selected: _selectedIndex == 3,
-                  onTap: () {
-                    _onItemTapped(3);
-                    Navigator.pop(context);
-                  },
-                  contentPadding: const EdgeInsets.only(left: 32.0),
-                ),
-                ListTile(
-                  leading: const Icon(Icons.person),
-                  title: const Text('Crew Members'),
-                  selected: _selectedIndex == 4,
-                  onTap: () {
-                    _onItemTapped(4);
-                    Navigator.pop(context);
-                  },
-                  contentPadding: const EdgeInsets.only(left: 32.0),
-                ),
-              ],
-            ),
-            ListTile(
-              leading: const Icon(Icons.analytics),
-              title: const Text('Reports & Analytics'),
-              selected: _selectedIndex == 5,
-              onTap: () {
-                _onItemTapped(5);
-                Navigator.pop(context);
-              },
-            ),
+
+            // Bottom items - fixed at the bottom
             const Divider(),
+
+            // Theme Toggle
+            Consumer<ThemeProvider>(
+              builder: (context, themeProvider, _) => ListTile(
+                leading: Icon(
+                  themeProvider.isDarkMode ? Icons.light_mode : Icons.dark_mode,
+                ),
+                title: Text(themeProvider.isDarkMode ? 'Light Mode' : 'Dark Mode'),
+                onTap: () {
+                  themeProvider.toggleTheme();
+                  // close drawer after toggle
+                  // Navigator.pop(context);
+                },
+              ),
+            ),
+
+            // Logout Button
             ListTile(
               leading: const Icon(Icons.logout),
               title: const Text('Logout'),
