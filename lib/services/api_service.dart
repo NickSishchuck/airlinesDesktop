@@ -444,4 +444,39 @@ class ApiService {
   Future<Map<String, dynamic>> getFlightByNumber(String flightNumber) async {
     return await get('/flights/flight-number/$flightNumber');
   }
+  // Add these methods to the ApiService class
+
+  // Flight Pricing API
+  Future<Map<String, dynamic>> getAllFlightPricing({int page = 1, int limit = 10}) async {
+    return await get('/flight-pricing?page=$page&limit=$limit');
+  }
+
+  Future<Map<String, dynamic>> getFlightPricingById(int id) async {
+    return await get('/flight-pricing/$id');
+  }
+
+  Future<Map<String, dynamic>> searchFlightPricing({String? origin, String? destination}) async {
+    String queryParams = '';
+    if (origin != null) queryParams += 'origin=$origin&';
+    if (destination != null) queryParams += 'destination=$destination&';
+
+    // Remove trailing ampersand if it exists
+    if (queryParams.isNotEmpty) {
+      queryParams = '?' + queryParams.substring(0, queryParams.length - 1);
+    }
+
+    return await get('/flight-pricing/search$queryParams');
+  }
+
+  Future<Map<String, dynamic>> createFlightPricing(Map<String, dynamic> pricingData) async {
+    return await post('/flight-pricing', pricingData);
+  }
+
+  Future<Map<String, dynamic>> updateFlightPricing(int id, Map<String, dynamic> pricingData) async {
+    return await put('/flight-pricing/$id', pricingData);
+  }
+
+  Future<Map<String, dynamic>> deleteFlightPricing(int id) async {
+    return await delete('/flight-pricing/$id');
+  }
 }

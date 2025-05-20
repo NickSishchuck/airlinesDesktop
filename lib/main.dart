@@ -11,6 +11,7 @@ import 'screens/tickets_screen.dart';
 import 'screens/reports_screen.dart';
 import 'screens/crew_management_screen.dart';
 import 'screens/crew_member_management_screen.dart';
+import 'screens/pricing_management_screen.dart';
 import 'utils/constants.dart';
 
 
@@ -285,11 +286,20 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
               ],
             ),
             ListTile(
-              leading: const Icon(Icons.analytics),
-              title: const Text('Reports & Analytics'),
+              leading: const Icon(Icons.attach_money),
+              title: const Text('Pricing Management'),
               selected: _selectedIndex == 5,
               onTap: () {
                 _onItemTapped(5);
+                Navigator.pop(context);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.analytics),
+              title: const Text('Reports & Analytics'),
+              selected: _selectedIndex == 6,
+              onTap: () {
+                _onItemTapped(6);
                 Navigator.pop(context);
               },
             ),
