@@ -17,6 +17,8 @@ class TicketsScreen extends StatefulWidget {
 }
 
 class _TicketsScreenState extends State<TicketsScreen> {
+  final PdfService _pdfService = PdfService();
+  final PdfPrinter _pdfPrinter = PdfPrinter();
   final ApiService _apiService = ApiService();
   List<Ticket> _tickets = [];
   bool _isLoading = true;
@@ -1602,8 +1604,20 @@ class _TicketsScreenState extends State<TicketsScreen> {
       final response = await _apiService.get('/tickets/${ticket.ticketId}/print');
       EasyLoading.dismiss();
 
-      if (response['success']) {
+      if (response['success'] && response['data'] != null) {
         final ticketData = response['data'];
+
+        // Debug: Print ticket data to see what we're working with
+        if (kDebugMode) {
+          print('Ticket data received: $ticketData');
+        }
+
+        // Check required fields before proceeding
+        if (ticketData['flight_number'] == null ||
+            ticketData['seat_number'] == null ||
+            ticketData['passenger_name'] == null) {
+          throw Exception('Missing required ticket information');
+        }
 
         // Generate PDF using our instance of PdfService
         final pdfData = await _pdfService.generateTicketPdf(ticketData);
@@ -1626,7 +1640,7 @@ class _TicketsScreenState extends State<TicketsScreen> {
                   Text('Your boarding pass has been generated.'),
                   SizedBox(height: 8),
                   Text(
-                    'Flight: ${ticketData['flight_number']} - ${ticketData['origin']} to ${ticketData['destination']}',
+                    'Flight: ${ticketData['flight_number']} - ${ticketData['origin'] ?? 'Unknown'} to ${ticketData['destination'] ?? 'Unknown'}',
                     style: TextStyle(fontWeight: FontWeight.bold),
                   ),
                   Text('Passenger: ${ticketData['passenger_name']}'),
@@ -1665,7 +1679,7 @@ class _TicketsScreenState extends State<TicketsScreen> {
           },
         );
       } else {
-        throw Exception('Failed to generate printable ticket');
+        throw Exception('Failed to generate printable ticket: No data received');
       }
     } catch (e) {
       EasyLoading.dismiss();

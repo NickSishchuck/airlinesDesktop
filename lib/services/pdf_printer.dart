@@ -7,7 +7,6 @@ import 'package:flutter/foundation.dart';
 
 class PdfPrinter {
 
-  final PdfPrinter _pdfPrinter = PdfPrinter();
   // Method to share PDF file
   Future<void> sharePdf(Uint8List pdfData, String fileName) async {
     await Printing.sharePdf(bytes: pdfData, filename: fileName);
