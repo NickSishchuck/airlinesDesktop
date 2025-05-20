@@ -42,6 +42,9 @@ dependencies:
   data_table_2: ^2.5.18
   syncfusion_flutter_charts: ^28.2.11
   flutter_easyloading: ^3.0.5
+  pdf: ^3.10.4
+  printing: ^5.11.1
+  path_provider: ^2.1.1
 
 dev_dependencies:
   flutter_test:

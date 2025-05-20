@@ -6,6 +6,8 @@ import 'package:syncfusion_flutter_charts/charts.dart';
 import '../services/api_service.dart';
 import '../models/report.dart';
 import '../utils/constants.dart';
+import '../services/pdf_service.dart';
+import '../services/pdf_printer.dart';
 
 class ReportsScreen extends StatefulWidget {
   const ReportsScreen({Key? key}) : super(key: key);
@@ -15,6 +17,8 @@ class ReportsScreen extends StatefulWidget {
 }
 
 class _ReportsScreenState extends State<ReportsScreen> {
+  final PdfService _pdfService = PdfService();
+  final PdfPrinter _pdfPrinter = PdfPrinter();
   final ApiService _apiService = ApiService();
   List<SalesReport> _salesReports = [];
   bool _isLoading = false;
@@ -39,6 +43,76 @@ class _ReportsScreenState extends State<ReportsScreen> {
     _generateReport();
   }
 
+  Future<void> _exportAsPdf() async {
+    try {
+      EasyLoading.show(status: 'Generating PDF...');
+
+      // Generate the PDF document
+      final pdfData = await _pdfService.generateTicketSalesReport(
+        salesReports: _salesReports,
+        startDate: _startDate,
+        endDate: _endDate,
+        totalRevenue: _totalRevenue,
+        totalTicketsSold: _totalTicketsSold,
+        averageOccupancy: _averageOccupancy,
+        revenueByClass: _revenueByClass,
+      );
+
+      EasyLoading.dismiss();
+
+      if (!mounted) return;
+
+      // Generate a filename based on date range
+      final fileName = 'ticket_sales_report_${DateFormat('yyyyMMdd').format(_startDate)}_to_${DateFormat('yyyyMMdd').format(_endDate)}.pdf';
+
+      // Show options dialog
+      await showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: const Text('PDF Generated'),
+            content: const Text('Your sales report has been generated. What would you like to do next?'),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+                child: const Text('Cancel'),
+              ),
+              ElevatedButton.icon(
+                icon: const Icon(Icons.preview),
+                label: const Text('Preview & Print'),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                  _pdfPrinter.previewPdf(
+                      context,
+                      pdfData,
+                      'Ticket Sales Report'
+                  );
+                },
+              ),
+              ElevatedButton.icon(
+                icon: const Icon(Icons.share),
+                label: const Text('Share PDF'),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                  _pdfPrinter.sharePdf(pdfData, fileName);
+                },
+              ),
+            ],
+          );
+        },
+      );
+    } catch (e) {
+      EasyLoading.dismiss();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error generating PDF: ${e.toString()}'),
+          backgroundColor: AppColors.errorColor,
+        ),
+      );
+    }
+  }
   Future<void> _generateReport() async {
     setState(() {
       _isLoading = true;
@@ -315,16 +389,8 @@ class _ReportsScreenState extends State<ReportsScreen> {
 
 
                                     ElevatedButton.icon(
-                                      onPressed: () {
-                                        // Export functionality would be implemented here
-                                        ScaffoldMessenger.of(context).showSnackBar(
-                                          const SnackBar(
-                                            content: Text('Export functionality would be implemented here'),
-                                            backgroundColor: AppColors.infoColor,
-                                          ),
-                                        );
-                                      },
-                                      icon: const Icon(Icons.download),
+                                      onPressed: _exportAsPdf,
+                                      icon: const Icon(Icons.picture_as_pdf),
                                       label: const Text('Export PDF'),
                                     ),
                                   ],
