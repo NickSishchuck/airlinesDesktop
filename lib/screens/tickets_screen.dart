@@ -166,6 +166,33 @@ class _TicketsScreenState extends State<TicketsScreen> {
         return Colors.grey;
     }
   }
+
+  Future<Map<String, dynamic>> _getFlightPricing(int flightId) async {
+    try {
+      final response = await _apiService.get('/flights/$flightId/pricing');
+      if (response['success']) {
+        return response['data'];
+      }
+      throw Exception('Failed to get flight pricing');
+    } catch (e) {
+      throw Exception('Error getting flight pricing: $e');
+    }
+  }
+
+  void _calculateAndUpdatePrice(TextEditingController priceController, Map<String, dynamic> pricingData, String ticketClass) {
+    double basePrice = pricingData['base_price'].toDouble();
+    Map<String, double> classMultipliers = {
+      'economy': 1.0,
+      'business': pricingData['business_multiplier'].toDouble(),
+      'first': pricingData['first_multiplier'].toDouble(),
+      'woman_only': pricingData['woman_only_multiplier'].toDouble(),
+    };
+
+    double multiplier = classMultipliers[ticketClass] ?? 1.0;
+    double finalPrice = basePrice * multiplier;
+    priceController.text = finalPrice.toStringAsFixed(2);
+  }
+
   Future<void> _loadTickets() async {
     setState(() {
       _isLoading = true;
@@ -474,6 +501,8 @@ class _TicketsScreenState extends State<TicketsScreen> {
     String ticketClass = isEditing ? ticket.ticketClass : 'economy';
     String paymentStatus = isEditing ? ticket.paymentStatus : 'pending';
 
+    Map<String, dynamic>? flightPricing;
+
     await showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -481,15 +510,33 @@ class _TicketsScreenState extends State<TicketsScreen> {
           builder: (context, setState) {
             void searchFlightInDialog() async {
               await _searchFlightByNumber(flightNumberController.text);
-              // This will update the dialog UI
+              if (_foundFlight != null && !isEditing) {
+                try {
+                  flightPricing = await _getFlightPricing(_foundFlight!['flight_id']);
+                  _calculateAndUpdatePrice(priceController, flightPricing!, ticketClass);
+                } catch (e) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Error calculating price: ${e.toString()}'),
+                      backgroundColor: AppColors.warningColor,
+                    ),
+                  );
+                }
+              }
               setState(() {});
             }
 
             void searchPassengerInDialog() async {
               await _searchPassengerByPassport(passportNumberController.text);
-              // This will update the dialog UI
               setState(() {});
             }
+
+            void updatePrice() {
+              if (flightPricing != null && !isEditing) {
+                _calculateAndUpdatePrice(priceController, flightPricing!, ticketClass);
+              }
+            }
+
             return AlertDialog(
               title: Text(isEditing ? 'Edit Ticket' : 'Book New Ticket'),
               content: SingleChildScrollView(
@@ -849,21 +896,71 @@ class _TicketsScreenState extends State<TicketsScreen> {
                       onChanged: (value) {
                         setState(() {
                           ticketClass = value!;
+                          updatePrice();
                         });
                       },
                     ),
                     SizedBox(height: 12),
 
-                    // Price - Always editable
-                    TextField(
-                      controller: priceController,
-                      decoration: const InputDecoration(
-                        labelText: 'Price',
-                        prefixText: '\$',
-                        border: OutlineInputBorder(),
-                        prefixIcon: Icon(Icons.attach_money),
-                      ),
-                      keyboardType: TextInputType.number,
+                    // Price field and calculate button
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            controller: priceController,
+                            decoration: const InputDecoration(
+                              labelText: 'Price',
+                              prefixText: '\$',
+                              border: OutlineInputBorder(),
+                              prefixIcon: Icon(Icons.attach_money),
+                            ),
+                            keyboardType: TextInputType.number,
+                            readOnly: !isEditing, // Make read-only when creating new ticket
+                            enabled: isEditing, // Disable when creating new ticket
+                          ),
+                        ),
+                        if (!isEditing) ...[
+                          SizedBox(width: 8),
+                          ElevatedButton.icon(
+                            onPressed: () async {
+                              if (_selectedFlightId == null) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Please select a flight first'),
+                                    backgroundColor: AppColors.warningColor,
+                                  ),
+                                );
+                                return;
+                              }
+                              
+                              try {
+                                flightPricing = await _getFlightPricing(_selectedFlightId!);
+                                _calculateAndUpdatePrice(priceController, flightPricing!, ticketClass);
+                                
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('Price calculated based on flight and class'),
+                                    backgroundColor: AppColors.successColor,
+                                    duration: Duration(seconds: 2),
+                                  ),
+                                );
+                              } catch (e) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('Error calculating price: ${e.toString()}'),
+                                    backgroundColor: AppColors.errorColor,
+                                  ),
+                                );
+                              }
+                            },
+                            icon: Icon(Icons.calculate),
+                            label: Text('Calculate'),
+                            style: ElevatedButton.styleFrom(
+                              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                            ),
+                          ),
+                        ],
+                      ],
                     ),
                     SizedBox(height: 12),
 
