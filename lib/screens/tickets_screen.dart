@@ -6,6 +6,8 @@ import '../services/api_service.dart';
 import '../models/ticket.dart';
 import '../utils/constants.dart';
 import 'package:flutter/foundation.dart';
+import '../services/pdf_service.dart';
+import '../services/pdf_printer.dart';
 
 class TicketsScreen extends StatefulWidget {
   const TicketsScreen({Key? key}) : super(key: key);
@@ -1603,225 +1605,59 @@ class _TicketsScreenState extends State<TicketsScreen> {
       if (response['success']) {
         final ticketData = response['data'];
 
+        // Generate PDF using our instance of PdfService
+        final pdfData = await _pdfService.generateTicketPdf(ticketData);
+
+        if (!mounted) return;
+
+        // Generate a filename for the PDF
+        final fileName = 'boarding_pass_${ticketData['flight_number']}_${ticketData['seat_number']}.pdf';
+
+        // Show options dialog
         await showDialog(
           context: context,
           builder: (BuildContext context) {
             return AlertDialog(
-              content: SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Center(
-                      child: Text(
-                        'BOARDING PASS',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    Center(
-                      child: Text(
-                        'Flight ${ticketData['flight_number']}',
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text('FROM:'),
-                              Text(
-                                ticketData['origin'],
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const Icon(Icons.flight),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.end,
-                            children: [
-                              const Text('TO:'),
-                              Text(
-                                ticketData['destination'],
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text('DEPARTURE:'),
-                            Text(
-                              DateFormat('dd-MM').format(DateTime.parse(ticketData['departure_time'])),
-                              style: const TextStyle(fontWeight: FontWeight.bold),
-                            ),
-                            const SizedBox(height: 10),
-                            Text(
-                              DateFormat('HH:mm').format(DateTime.parse(ticketData['departure_time'])),
-                            ),
-
-                          ],
-                        ),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: [
-                            const Text('ARRIVAL:'),
-                            Text(
-                              DateFormat('dd-MM').format(DateTime.parse(ticketData['arrival_time'])),
-                              style: const TextStyle(fontWeight: FontWeight.bold),
-                            ),
-                            const SizedBox(height: 10),
-                            Text(
-                              DateFormat('HH:mm').format(DateTime.parse(ticketData['arrival_time'])),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    const Divider(),
-                    const SizedBox(height: 16),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text('PASSENGER:'),
-                            Text(
-                              ticketData['passenger_name'],
-                              style: const TextStyle(fontWeight: FontWeight.bold),
-                            ),
-                          ],
-                        ),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: [
-                            const Text('PASSPORT:'),
-                            Text(
-                              ticketData['passport_number'],
-                              style: const TextStyle(fontWeight: FontWeight.bold),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text('SEAT:'),
-                            Text(
-                              ticketData['seat_number'],
-                              style: const TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
-                        ),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: [
-                            const Text('CLASS:'),
-                            Text(
-                              ticketData['class'].toUpperCase(),
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    const Divider(),
-                    const SizedBox(height: 16),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text('GATE:'),
-                            Text(
-                              ticketData['gate'],
-                              style: const TextStyle(fontWeight: FontWeight.bold),
-                            ),
-                          ],
-                        ),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: [
-                            const Text('AIRCRAFT:'),
-                            Text(
-                              ticketData['aircraft_model'],
-                              style: const TextStyle(fontWeight: FontWeight.bold),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    Center(
-                      child: Text(
-                        'TICKET ID: ${ticketData['ticket_id']}',
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+              title: Text('Boarding Pass Generated'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Your boarding pass has been generated.'),
+                  SizedBox(height: 8),
+                  Text(
+                    'Flight: ${ticketData['flight_number']} - ${ticketData['origin']} to ${ticketData['destination']}',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  Text('Passenger: ${ticketData['passenger_name']}'),
+                  Text('Seat: ${ticketData['seat_number']}'),
+                ],
               ),
               actions: [
                 TextButton(
                   onPressed: () {
                     Navigator.of(context).pop();
                   },
-                  child: const Text('Close'),
+                  child: const Text('Cancel'),
                 ),
                 ElevatedButton.icon(
-                  icon: const Icon(Icons.print),
-                  label: const Text('Print'),
+                  icon: const Icon(Icons.preview),
+                  label: const Text('Preview & Print'),
                   onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Printing functionality would be implemented here'),
-                        backgroundColor: AppColors.infoColor,
-                      ),
-                    );
                     Navigator.of(context).pop();
+                    _pdfPrinter.previewPdf(
+                      context,
+                      pdfData,
+                      'Boarding Pass',
+                    );
+                  },
+                ),
+                ElevatedButton.icon(
+                  icon: const Icon(Icons.share),
+                  label: const Text('Share PDF'),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    _pdfPrinter.sharePdf(pdfData, fileName);
                   },
                 ),
               ],
