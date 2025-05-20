@@ -470,7 +470,6 @@ class _CrewMemberManagementScreenState extends State<CrewMemberManagementScreen>
 
     try {
       final response = await _apiService.get('/crew-members/${crewMember['crew_member_id']}/assignments');
-
       EasyLoading.dismiss();
 
       if (!response['success']) {
@@ -481,80 +480,80 @@ class _CrewMemberManagementScreenState extends State<CrewMemberManagementScreen>
 
       if (!mounted) return;
 
+      // Use a simpler approach without DataTable2
       await showDialog(
         context: context,
         builder: (BuildContext context) {
-          return AlertDialog(
-            title: Text('Crew Assignments: ${crewMember['first_name']} ${crewMember['last_name']}'),
-            content: SingleChildScrollView(
-              child: SizedBox(
-                width: double.maxFinite,
-                child: assignmentsData.isEmpty
-                    ? const Center(child: Text('This crew member is not assigned to any crews.'))
-                    : Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    DataTable2(
-                      columns: const [
-                        DataColumn2(
-                          label: Text('Crew ID'),
-                          size: ColumnSize.S,
-                        ),
-                        DataColumn2(
-                          label: Text('Crew Name'),
-                          size: ColumnSize.L,
-                        ),
-                        DataColumn2(
-                          label: Text('Status'),
-                          size: ColumnSize.M,
-                        ),
-                        DataColumn2(
-                          label: Text('Members'),
-                          size: ColumnSize.S,
-                          numeric: true,
-                        ),
-                      ],
-                      rows: assignmentsData.map<DataRow>((assignment) {
-                        return DataRow(
-                          cells: [
-                            DataCell(Text('#${assignment['crew_id']}')),
-                            DataCell(Text(assignment['name'])),
-                            DataCell(
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                decoration: BoxDecoration(
-                                  color: assignment['status'] == 'active'
-                                      ? AppColors.successColor
-                                      : assignment['status'] == 'off-duty'
-                                      ? AppColors.warningColor
-                                      : AppColors.infoColor,
-                                  borderRadius: BorderRadius.circular(4),
-                                ),
-                                child: Text(
-                                  assignment['status'].toUpperCase(),
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                  ),
+          return Dialog(
+            child: Container(
+              width: 600, // Fixed width
+              height: 500, // Fixed height
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Title
+                  Text(
+                    'Crew Assignments: ${crewMember['first_name']} ${crewMember['last_name']}',
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Content
+                  Expanded(
+                    child: assignmentsData.isEmpty
+                        ? const Center(child: Text('This crew member is not assigned to any crews.'))
+                        : ListView.builder(
+                      itemCount: assignmentsData.length,
+                      itemBuilder: (context, index) {
+                        final assignment = assignmentsData[index];
+                        return Card(
+                          margin: const EdgeInsets.only(bottom: 8),
+                          child: ListTile(
+                            title: Text(
+                              assignment['name'],
+                              style: const TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                            subtitle: Text('Crew ID: #${assignment['crew_id']} | Members: ${assignment['member_count']}'),
+                            trailing: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: assignment['status'] == 'active'
+                                    ? AppColors.successColor
+                                    : assignment['status'] == 'off-duty'
+                                    ? AppColors.warningColor
+                                    : AppColors.infoColor,
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Text(
+                                assignment['status'].toUpperCase(),
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
                                 ),
                               ),
                             ),
-                            DataCell(Text(assignment['member_count'].toString())),
-                          ],
+                          ),
                         );
-                      }).toList(),
+                      },
                     ),
-                  ],
-                ),
+                  ),
+
+                  // Actions
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: TextButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      child: const Text('Close'),
+                    ),
+                  ),
+                ],
               ),
             ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: const Text('Close'),
-              ),
-            ],
           );
         },
       );
