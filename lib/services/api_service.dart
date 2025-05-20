@@ -468,6 +468,9 @@ class ApiService {
     return await get('/flight-pricing/search$queryParams');
   }
 
+  // Future<Map<String, dynamic>> getFlightPricing({int page = 1, int limit = 10}) async {
+  //   return await get('/flight-pricing', );
+  // }
   Future<Map<String, dynamic>> createFlightPricing(Map<String, dynamic> pricingData) async {
     return await post('/flight-pricing', pricingData);
   }

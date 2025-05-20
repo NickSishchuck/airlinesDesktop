@@ -138,6 +138,7 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
     TicketsScreen(),
     CrewManagementScreen(),
     CrewMemberManagementScreen(),
+    PricingManagementScreen(),
     ReportsScreen(),
   ];
 
@@ -147,6 +148,7 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
     'Tickets Management',
     'Crew Management',
     'Crew Members Management',
+    'Pricing Management',
     'Reports & Analytics',
   ];
   void _onItemTapped(int index) {

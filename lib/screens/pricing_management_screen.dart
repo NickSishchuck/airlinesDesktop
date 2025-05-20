@@ -44,7 +44,7 @@ class _PricingManagementScreenState extends State<PricingManagementScreen> {
     });
 
     try {
-      final response = await _apiService.getFlightPricing(page: _page, limit: _limit);
+      final response = await _apiService.getAllFlightPricing(page: _page, limit: _limit);
 
       if (response['success']) {
         final List pricingData = response['data'];
@@ -215,7 +215,7 @@ class _PricingManagementScreenState extends State<PricingManagementScreen> {
                     TextField(
                       controller: basePriceController,
                       decoration: const InputDecoration(
-                        labelText: 'Base Price ($)',
+                        labelText: 'Base Price ()',
                         border: OutlineInputBorder(),
                         prefixIcon: Icon(Icons.attach_money),
                       ),
@@ -396,7 +396,7 @@ class _PricingManagementScreenState extends State<PricingManagementScreen> {
 
                     try {
                       // Prepare pricing data
-                      final pricingData = {
+                      final Map<String, dynamic >pricingData = {
                         'base_price': basePrice,
                         'economy_multiplier': economyMultiplier,
                         'business_multiplier': businessMultiplier,
@@ -414,7 +414,7 @@ class _PricingManagementScreenState extends State<PricingManagementScreen> {
                         );
                       } else {
                         // Add route information for new pricing
-                        pricingData['origin'] = _originController.text;
+                        pricingData['origin'] = _originController;
                         pricingData['destination'] = _destinationController.text;
                         await _apiService.createFlightPricing(pricingData);
                       }
