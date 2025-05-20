@@ -129,42 +129,79 @@ class _PricingManagementScreenState extends State<PricingManagementScreen> {
     _loadPricingData();
   }
 
+
   Future<void> _showPricingDialog({Map<String, dynamic>? pricingItem}) async {
     final bool isEditing = pricingItem != null;
+
+    // Safely convert values with proper type handling
+    double safeGetDouble(dynamic value, double defaultValue) {
+      if (value == null) return defaultValue;
+      if (value is int) return value.toDouble();
+      if (value is double) return value;
+      if (value is String) return double.tryParse(value) ?? defaultValue;
+      return defaultValue;
+    }
 
     final TextEditingController routeController = TextEditingController(
       text: isEditing ? '${pricingItem['origin']} → ${pricingItem['destination']}' : '',
     );
+
+    // Safely handle base price
+    final double basePrice = isEditing ? safeGetDouble(pricingItem['base_price'], 0.0) : 0.0;
     final TextEditingController basePriceController = TextEditingController(
-      text: isEditing ? pricingItem['base_price'].toString() : '',
+      text: isEditing ? basePrice.toString() : '',
     );
+
+    // Safely handle multipliers
     final TextEditingController economyMultiplierController = TextEditingController(
-      text: isEditing ? pricingItem['economy_multiplier'].toString() : '1.0',
+      text: isEditing ? safeGetDouble(pricingItem['economy_multiplier'], 1.0).toString() : '1.0',
     );
+
     final TextEditingController businessMultiplierController = TextEditingController(
-      text: isEditing ? pricingItem['business_multiplier'].toString() : '2.5',
+      text: isEditing ? safeGetDouble(pricingItem['business_multiplier'], 2.5).toString() : '2.5',
     );
+
     final TextEditingController firstMultiplierController = TextEditingController(
-      text: isEditing ? pricingItem['first_multiplier'].toString() : '4.0',
+      text: isEditing ? safeGetDouble(pricingItem['first_multiplier'], 4.0).toString() : '4.0',
     );
+
     final TextEditingController womanOnlyMultiplierController = TextEditingController(
-      text: isEditing ? pricingItem['woman_only_multiplier'].toString() : '1.2',
+      text: isEditing ? safeGetDouble(pricingItem['woman_only_multiplier'], 1.2).toString() : '1.2',
     );
 
     // For display purposes (sample pricing)
-    double basePrice = isEditing ? pricingItem['base_price'] : 100.0;
+    double displayBasePrice = isEditing ? basePrice : 100.0;
+    // For live updates of prices
+    double economyPrice = 0.0;
+    double businessPrice = 0.0;
+    double firstClassPrice = 0.0;
+    double womanOnlyPrice = 0.0;
 
     await showDialog(
       context: context,
       builder: (BuildContext context) {
         return StatefulBuilder(
           builder: (context, setState) {
-            // Helper function to update sample pricing
-            void updateSamplePricing() {
+            // Helper function to update all prices when any value changes
+            void updateAllPrices() {
               final double base = double.tryParse(basePriceController.text) ?? 100.0;
+              final double economy = double.tryParse(economyMultiplierController.text) ?? 1.0;
+              final double business = double.tryParse(businessMultiplierController.text) ?? 2.5;
+              final double firstClass = double.tryParse(firstMultiplierController.text) ?? 4.0;
+              final double womanOnly = double.tryParse(womanOnlyMultiplierController.text) ?? 1.2;
+
               setState(() {
-                basePrice = base;
+                displayBasePrice = base;
+                economyPrice = base * economy;
+                businessPrice = base * business;
+                firstClassPrice = base * firstClass;
+                womanOnlyPrice = base * womanOnly;
               });
+            }
+
+            // Initialize prices on first load
+            if (economyPrice == 0.0) {
+              updateAllPrices();
             }
 
             return AlertDialog(
@@ -215,16 +252,16 @@ class _PricingManagementScreenState extends State<PricingManagementScreen> {
                     TextField(
                       controller: basePriceController,
                       decoration: const InputDecoration(
-                        labelText: 'Base Price ()',
+                        labelText: 'Base Price',
                         border: OutlineInputBorder(),
                         prefixIcon: Icon(Icons.attach_money),
                       ),
                       keyboardType: TextInputType.number,
-                      onChanged: (_) => updateSamplePricing(),
+                      onChanged: (_) => updateAllPrices(),
                     ),
                     const SizedBox(height: 16),
 
-                    // Multipliers
+                    // Multipliers section header
                     const Text(
                       'Class Multipliers',
                       style: TextStyle(
@@ -246,11 +283,12 @@ class _PricingManagementScreenState extends State<PricingManagementScreen> {
                               prefixIcon: Icon(Icons.airline_seat_recline_normal),
                             ),
                             keyboardType: TextInputType.number,
+                            onChanged: (_) => updateAllPrices(),
                           ),
                         ),
                         const SizedBox(width: 16),
                         Text(
-                          '\$${(basePrice * (double.tryParse(economyMultiplierController.text) ?? 1.0)).toStringAsFixed(2)}',
+                          '\$${economyPrice.toStringAsFixed(2)}',
                           style: const TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 16,
@@ -272,11 +310,12 @@ class _PricingManagementScreenState extends State<PricingManagementScreen> {
                               prefixIcon: Icon(Icons.business),
                             ),
                             keyboardType: TextInputType.number,
+                            onChanged: (_) => updateAllPrices(),
                           ),
                         ),
                         const SizedBox(width: 16),
                         Text(
-                          '\$${(basePrice * (double.tryParse(businessMultiplierController.text) ?? 2.5)).toStringAsFixed(2)}',
+                          '\$${businessPrice.toStringAsFixed(2)}',
                           style: const TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 16,
@@ -298,11 +337,12 @@ class _PricingManagementScreenState extends State<PricingManagementScreen> {
                               prefixIcon: Icon(Icons.airline_seat_flat),
                             ),
                             keyboardType: TextInputType.number,
+                            onChanged: (_) => updateAllPrices(),
                           ),
                         ),
                         const SizedBox(width: 16),
                         Text(
-                          '\$${(basePrice * (double.tryParse(firstMultiplierController.text) ?? 4.0)).toStringAsFixed(2)}',
+                          '\$${firstClassPrice.toStringAsFixed(2)}',
                           style: const TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 16,
@@ -324,11 +364,12 @@ class _PricingManagementScreenState extends State<PricingManagementScreen> {
                               prefixIcon: Icon(Icons.woman),
                             ),
                             keyboardType: TextInputType.number,
+                            onChanged: (_) => updateAllPrices(),
                           ),
                         ),
                         const SizedBox(width: 16),
                         Text(
-                          '\$${(basePrice * (double.tryParse(womanOnlyMultiplierController.text) ?? 1.2)).toStringAsFixed(2)}',
+                          '\$${womanOnlyPrice.toStringAsFixed(2)}',
                           style: const TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 16,
@@ -396,7 +437,7 @@ class _PricingManagementScreenState extends State<PricingManagementScreen> {
 
                     try {
                       // Prepare pricing data
-                      final Map<String, dynamic >pricingData = {
+                      final Map<String, dynamic> pricingData = {
                         'base_price': basePrice,
                         'economy_multiplier': economyMultiplier,
                         'business_multiplier': businessMultiplier,
@@ -414,7 +455,7 @@ class _PricingManagementScreenState extends State<PricingManagementScreen> {
                         );
                       } else {
                         // Add route information for new pricing
-                        pricingData['origin'] = _originController;
+                        pricingData['origin'] = _originController.text;
                         pricingData['destination'] = _destinationController.text;
                         await _apiService.createFlightPricing(pricingData);
                       }
@@ -647,11 +688,36 @@ class _PricingManagementScreenState extends State<PricingManagementScreen> {
                             ),
                           ],
                           rows: _pricingData.map((pricing) {
-                            final basePrice = pricing['base_price'] as double;
-                            final economyMultiplier = pricing['economy_multiplier'] as double? ?? 1.0;
-                            final businessMultiplier = pricing['business_multiplier'] as double? ?? 2.5;
-                            final firstMultiplier = pricing['first_multiplier'] as double? ?? 4.0;
-                            final womanOnlyMultiplier = pricing['woman_only_multiplier'] as double? ?? 1.2;
+                            // Add proper type conversion for all numeric values
+                            final basePrice = pricing['base_price'] is int
+                                ? (pricing['base_price'] as int).toDouble()
+                                : pricing['base_price'] is String
+                                ? double.tryParse(pricing['base_price']) ?? 0.0
+                                : pricing['base_price'] as double;
+
+                            final economyMultiplier = pricing['economy_multiplier'] is int
+                                ? (pricing['economy_multiplier'] as int).toDouble()
+                                : pricing['economy_multiplier'] is String
+                                ? double.tryParse(pricing['economy_multiplier']) ?? 1.0
+                                : pricing['economy_multiplier'] as double? ?? 1.0;
+
+                            final businessMultiplier = pricing['business_multiplier'] is int
+                                ? (pricing['business_multiplier'] as int).toDouble()
+                                : pricing['business_multiplier'] is String
+                                ? double.tryParse(pricing['business_multiplier']) ?? 2.5
+                                : pricing['business_multiplier'] as double? ?? 2.5;
+
+                            final firstMultiplier = pricing['first_multiplier'] is int
+                                ? (pricing['first_multiplier'] as int).toDouble()
+                                : pricing['first_multiplier'] is String
+                                ? double.tryParse(pricing['first_multiplier']) ?? 4.0
+                                : pricing['first_multiplier'] as double? ?? 4.0;
+
+                            final womanOnlyMultiplier = pricing['woman_only_multiplier'] is int
+                                ? (pricing['woman_only_multiplier'] as int).toDouble()
+                                : pricing['woman_only_multiplier'] is String
+                                ? double.tryParse(pricing['woman_only_multiplier']) ?? 1.2
+                                : pricing['woman_only_multiplier'] as double? ?? 1.2;
 
                             return DataRow(
                               cells: [
