@@ -13,7 +13,7 @@ class Ticket {
   final String? destination;
   final String? passengerName;
   final String? passportNumber;
-  final String? gender;  // Add gender field
+  final String? gender;
   final int? passengerId;
   final int? flightId;
 
@@ -31,7 +31,7 @@ class Ticket {
     this.destination,
     this.passengerName,
     this.passportNumber,
-    this.gender,  // Add to constructor
+    this.gender,
     this.passengerId,
     this.flightId,
   });

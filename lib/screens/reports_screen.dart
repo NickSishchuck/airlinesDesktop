@@ -8,6 +8,13 @@ import '../models/report.dart';
 import '../utils/constants.dart';
 import '../services/pdf_service.dart';
 import '../services/pdf_printer.dart';
+import 'dart:convert';
+import 'dart:io';
+import 'dart:typed_data';
+import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
+
 
 class ReportsScreen extends StatefulWidget {
   const ReportsScreen({Key? key}) : super(key: key);
@@ -41,6 +48,165 @@ class _ReportsScreenState extends State<ReportsScreen> {
   void initState() {
     super.initState();
     _generateReport();
+  }
+
+  Future<void> _exportAsCsv() async {
+    try {
+      EasyLoading.show(status: 'Generating CSV...');
+
+      // Generate CSV content with headers
+      final StringBuffer csvContent = StringBuffer();
+
+      // Add CSV headers
+      csvContent.writeln('Flight Number,Origin,Destination,Date,Class,Tickets Sold,Revenue,Occupancy Percentage');
+
+      // Add data rows
+      for (final report in _salesReports) {
+        csvContent.writeln(
+            '${report.flightNumber},'
+                '${report.origin},'
+                '${report.destination},'
+                '${DateFormat('yyyy-MM-dd').format(report.flightDate)},'
+                '${report.ticketClass},'
+                '${report.ticketsSold},'
+                '${report.totalRevenue},'
+                '${report.occupancyPercentage}'
+        );
+      }
+
+      // Add summary row
+      csvContent.writeln(
+          ',,,,TOTAL,'
+              '$_totalTicketsSold,'
+              '$_totalRevenue,'
+              '$_averageOccupancy'
+      );
+
+      // Convert to bytes
+      final Uint8List bytes = Uint8List.fromList(utf8.encode(csvContent.toString()));
+
+      EasyLoading.dismiss();
+
+      // Generate a filename based on date range
+      final fileName = 'ticket_sales_report_${DateFormat('yyyyMMdd').format(_startDate)}_to_${DateFormat('yyyyMMdd').format(_endDate)}.csv';
+
+      if (!mounted) return;
+
+      // Show options dialog
+      await showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: const Text('CSV Generated'),
+            content: const Text('Your sales report has been generated in CSV format. What would you like to do next?'),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+                child: const Text('Cancel'),
+              ),
+              // ElevatedButton.icon(
+              //   icon: const Icon(Icons.share),
+              //   label: const Text('Share CSV'),
+              //   onPressed: () async {
+              //     Navigator.of(context).pop();
+              //     await _shareCsvFile(bytes, fileName);
+              //   },
+              // ),
+              ElevatedButton.icon(
+                icon: const Icon(Icons.download),
+                label: const Text('Save CSV'),
+                onPressed: () async {
+                  Navigator.of(context).pop();
+                  await _saveCsvFile(bytes, fileName);
+                },
+              ),
+            ],
+          );
+        },
+      );
+    } catch (e) {
+      EasyLoading.dismiss();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error generating CSV: ${e.toString()}'),
+          backgroundColor: AppColors.errorColor,
+        ),
+      );
+    }
+  }
+
+
+//   Future<void> _shareCsvFile(Uint8List bytes, String fileName) async {
+//     try {
+//       if (kIsWeb) {
+//         // Web implementation for sharing
+//         _webDownloadFile(bytes, fileName);
+//
+//         ScaffoldMessenger.of(context).showSnackBar(
+//           const SnackBar(
+//             content: Text('CSV file downloaded'),
+//             backgroundColor: AppColors.successColor,
+//           ),
+//         );
+//       } else {
+//         // Mobile implementation for sharing
+//         final tempDir = await getTemporaryDirectory();
+//         final file = File('${tempDir.path}/$fileName');
+//         await file.writeAsBytes(bytes);
+//
+//         // Use the correct Share.share method for sharing
+//         await Share.shareFiles(
+//           [file.path],
+//           mimeTypes: ['text/csv'],
+//           subject: 'Ticket Sales Report',
+//         );
+//       }
+//     } catch (e) {
+//       ScaffoldMessenger.of(context).showSnackBar(
+//         SnackBar(
+//           content: Text('Error sharing CSV: ${e.toString()}'),
+//           backgroundColor: AppColors.errorColor,
+//         ),
+//       );
+//     }
+//   }
+
+// Helper method to save the CSV file
+  Future<void> _saveCsvFile(Uint8List bytes, String fileName) async {
+    try {
+      // For mobile, save to downloads folder
+      if (Platform.isAndroid || Platform.isIOS) {
+        final directory = await getApplicationDocumentsDirectory();
+        final file = File('${directory.path}/$fileName');
+        await file.writeAsBytes(bytes);
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('CSV saved to ${file.path}'),
+            backgroundColor: AppColors.successColor,
+          ),
+        );
+      }
+      // For web, trigger download
+      // else if (kIsWeb) {
+      //   // Web download handling would be here
+      //   final blob = html.Blob([bytes]);
+      //   final url = html.Url.createObjectUrlFromBlob(blob);
+      //   final anchor = html.AnchorElement(href: url)
+      //     ..setAttribute('download', fileName)
+      //     ..click();
+      //   html.Url.revokeObjectUrl(url);
+      // }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error saving CSV: ${e.toString()}'),
+          backgroundColor: AppColors.errorColor,
+        ),
+      );
+    }
   }
 
   Future<void> _exportAsPdf() async {
@@ -372,22 +538,6 @@ class _ReportsScreenState extends State<ReportsScreen> {
 
                                 Row(
                                   children: [
-                                    ElevatedButton.icon(
-                                      onPressed: () {
-                                        // Export functionality would be implemented here
-                                        ScaffoldMessenger.of(context).showSnackBar(
-                                          const SnackBar(
-                                            content: Text('Export functionality would be implemented here'),
-                                            backgroundColor: AppColors.infoColor,
-                                          ),
-                                        );
-                                      },
-                                      icon: const Icon(Icons.download),
-                                      label: const Text('Export CSV'),
-                                    ),
-
-
-
                                     ElevatedButton.icon(
                                       onPressed: _exportAsPdf,
                                       icon: const Icon(Icons.picture_as_pdf),
