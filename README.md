@@ -2,7 +2,7 @@
 
 My term paper project
 
-A comprehensive Flutter-based administration panel for airline management, designed to streamline operations for staff and administrators.
+A Flutter-based administration panel for airline management, designed to streamline operations for staff and administrators.
 
 ![overview](https://github.com/user-attachments/assets/2c55a48a-e4e6-4b36-970f-7500267b88d8)
 
