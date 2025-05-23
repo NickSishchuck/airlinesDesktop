@@ -44,8 +44,8 @@ API Integration: REST API connection to backend services
 
 1. Clone the repository
 ```bash
-git clone https://github.com/yourusername/airline-admin-panel.git
-cd airline-admin-panel
+git clone https://github.com/NickSishchuck/airlinesDesktop.git
+cd airlinesDesktop
 ```
 2. Install dependencies
 ```bash
